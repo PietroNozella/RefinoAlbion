@@ -1,4 +1,4 @@
-# Uso local: pip install -r requirements.txt && streamlit run streamlit_app.py
+# Uso local: pip install -r requirements-dev.txt && streamlit run streamlit_app.py
 import streamlit as st
 
 from calculator import (
