@@ -3,6 +3,7 @@ import streamlit as st
 
 from calculator import calculate_refining_profit
 from formatting import formatar_compacto
+from recipes import get_recipe
 
 TIER_OPTIONS = ["T3", "T4", "T5", "T6", "T7", "T8"]
 
@@ -37,7 +38,9 @@ with c2:
         step=1.0,
         format="%.2f",
     )
-    quantidade = st.number_input("Quantidade", min_value=1, value=1, step=1)
+    quantidade = st.number_input(
+        "Quantidade (refinado desejado)", min_value=1, value=1, step=1
+    )
 
 try:
     resultado = calculate_refining_profit(
@@ -50,6 +53,18 @@ try:
 except ValueError as e:
     st.error(str(e))
     st.stop()
+
+qtd_saida = int(quantidade)
+recipe = get_recipe(tier)
+n_tier = int(tier[1:])
+label_ref_anterior = f"T{n_tier - 1} refinado"
+qtd_bruto = recipe["raw_qty"] * qtd_saida
+qtd_ref_anterior = recipe["prev_qty"] * qtd_saida
+
+st.subheader("Comprar")
+b1, b2 = st.columns(2)
+b1.metric(f"{tier} bruto", f"{qtd_bruto}")
+b2.metric(label_ref_anterior, f"{qtd_ref_anterior}")
 
 st.subheader("Resultado")
 
