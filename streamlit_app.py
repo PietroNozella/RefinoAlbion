@@ -1,7 +1,13 @@
 # Uso local: pip install -r requirements.txt && streamlit run streamlit_app.py
 import streamlit as st
 
-from calculator import calculate_refining_profit
+from calculator import (
+    RETORNO,
+    RETORNO_FOCO,
+    TAXA_MERCADO,
+    TAXA_MERCADO_SEM_PREMIUM,
+    calculate_refining_profit,
+)
 from formatting import formatar_compacto
 from recipes import get_recipe
 
@@ -42,6 +48,15 @@ with c2:
         "Quantidade (refinado desejado)", min_value=1, value=1, step=1
     )
 
+f1, f2 = st.columns(2)
+with f1:
+    usar_foco = st.checkbox("Usar foco (retorno 54%)", value=False)
+with f2:
+    premium = st.checkbox("Premium (taxa mercado 6,5%)", value=True)
+
+retorno = RETORNO_FOCO if usar_foco else RETORNO
+taxa_mercado = TAXA_MERCADO if premium else TAXA_MERCADO_SEM_PREMIUM
+
 try:
     resultado = calculate_refining_profit(
         tier,
@@ -49,6 +64,8 @@ try:
         preco_refinado_anterior,
         preco_venda_refinado,
         int(quantidade),
+        retorno=retorno,
+        taxa_mercado=taxa_mercado,
     )
 except ValueError as e:
     st.error(str(e))

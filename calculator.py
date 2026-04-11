@@ -2,7 +2,9 @@ from recipes import get_recipe
 
 # Constantes do sistema
 RETORNO = 0.367
+RETORNO_FOCO = 0.54
 TAXA_MERCADO = 0.065
+TAXA_MERCADO_SEM_PREMIUM = 0.105
 TAXA_ESTACAO = 0.0
 
 
