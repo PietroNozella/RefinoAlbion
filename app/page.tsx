@@ -91,7 +91,7 @@ export default function Home() {
       try {
         json = (await res.json()) as ApiResponse & { error?: string };
       } catch {
-        setError(`Resposta inválida (${res.status}). Use npx vercel dev para API local.`);
+        setError(`Resposta inválida (${res.status}).`);
         return;
       }
       if (!json) return;
@@ -105,9 +105,7 @@ export default function Home() {
       }
       setData(json as ApiResponse);
     } catch {
-      setError(
-        "Não foi possível chamar a API. Em desenvolvimento local use: npx vercel dev",
-      );
+      setError("Não foi possível chamar a API.");
     } finally {
       setLoading(false);
     }

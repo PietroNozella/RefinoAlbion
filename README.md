@@ -19,11 +19,19 @@ pip install -r requirements-dev.txt
 streamlit run streamlit_app.py
 ```
 
+### CLI Python (opcional)
+
+```bash
+python cli.py
+```
+
 ## Deploy na Vercel
 
 1. Ligue o repositório na [Vercel](https://vercel.com).
 2. Framework: **Next.js** (deteção automática).
 3. Build: `npm run build`.
+
+Não há `requirements.txt` na raiz de propósito: evita que a Vercel trate o repo como app Python. O deploy é só Next.js (`npm run build`).
 
 Variáveis de ambiente não são obrigatórias.
 

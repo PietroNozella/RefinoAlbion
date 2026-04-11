@@ -1,2 +1,2 @@
--r requirements.txt
+# Streamlit + dependências locais (não usado pelo build da Vercel).
 streamlit>=1.28.0

@@ -1,1 +1,0 @@
-# Runtime Python na Vercel: calculator/recipes/formatting usam apenas stdlib.
