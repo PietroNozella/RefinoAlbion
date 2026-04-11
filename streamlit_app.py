@@ -25,14 +25,14 @@ with c1:
     preco_bruto = st.number_input(
         "Preço recurso bruto",
         min_value=0.0,
-        value=0.0,
+        value=None,
         step=1.0,
         format="%.2f",
     )
     preco_refinado_anterior = st.number_input(
         "Preço refinado anterior",
         min_value=0.0,
-        value=0.0,
+        value=None,
         step=1.0,
         format="%.2f",
     )
@@ -40,12 +40,15 @@ with c2:
     preco_venda_refinado = st.number_input(
         "Valor produto refinado",
         min_value=0.0,
-        value=0.0,
+        value=None,
         step=1.0,
         format="%.2f",
     )
     quantidade = st.number_input(
-        "Quantidade (refinado desejado)", min_value=1, value=1, step=1
+        "Quantidade (refinado desejado)",
+        min_value=1,
+        value=None,
+        step=1,
     )
 
 f1, f2 = st.columns(2)
@@ -56,6 +59,15 @@ with f2:
 
 retorno = RETORNO_FOCO if usar_foco else RETORNO
 taxa_mercado = TAXA_MERCADO if premium else TAXA_MERCADO_SEM_PREMIUM
+
+if (
+    preco_bruto is None
+    or preco_refinado_anterior is None
+    or preco_venda_refinado is None
+    or quantidade is None
+):
+    st.info("Preencha preços e quantidade para ver o resultado.")
+    st.stop()
 
 try:
     resultado = calculate_refining_profit(
