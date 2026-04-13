@@ -1,7 +1,7 @@
 # Refino Albion — calculadora
 
 - **Python:** `calculator.py`, `recipes.py`, `formatting.py` — usados pelo Streamlit e como referência.
-- **Web (Vercel):** Next.js em `app/`; **`POST /api/calculate`** em [`app/api/calculate/route.ts`](app/api/calculate/route.ts), com a mesma matemática em [`lib/refino.ts`](lib/refino.ts) (manter alinhado ao Python).
+- **Web (Vercel):** Next.js em `app/`; `**POST /api/calculate`** em `[app/api/calculate/route.ts](app/api/calculate/route.ts)`, com a mesma matemática em `[lib/refino.ts](lib/refino.ts)` (manter alinhado ao Python).
 
 ## Desenvolvimento
 
@@ -37,8 +37,11 @@ Variáveis de ambiente não são obrigatórias.
 
 ## Estrutura
 
-| Caminho | Função |
-|--------|--------|
-| `app/` | App Router (UI + `app/api/calculate`) |
-| `lib/refino.ts` | Lógica espelhada para a API Node |
+
+| Caminho         | Função                                 |
+| --------------- | -------------------------------------- |
+| `app/`          | App Router (UI + `app/api/calculate`)  |
+| `lib/refino.ts` | Lógica espelhada para a API Node       |
 | `calculator.py` | Núcleo Python (Streamlit / referência) |
+
+

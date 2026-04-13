@@ -96,3 +96,130 @@ export function calculateRefiningProfit(
     margem,
   };
 }
+
+export type SimulacaoEstoque = {
+  craftsEstimados: number;
+  totalRefinado: number;
+  totalRefinadoEstimado: number;
+  retornoTotalBruto: number;
+  retornoTotalRefAnterior: number;
+  consumoTotalBruto: number;
+  consumoTotalRefAnterior: number;
+  sobraBruto: number;
+  sobraRefAnterior: number;
+};
+
+/** Estima re-refino por consumo líquido esperado (sem floor por craft). */
+export function simularRefinoPorEstoque(
+  tier: string,
+  estoqueBruto: number,
+  estoqueRefAnterior: number,
+  retorno: number,
+): SimulacaoEstoque {
+  const recipe = getRecipe(tier);
+  if (!recipe) {
+    throw new Error(`Tier inválido: ${tier}`);
+  }
+  if (retorno < 0 || retorno >= 1) {
+    throw new Error("Retorno inválido para estimativa");
+  }
+
+  const { raw_qty, prev_qty } = recipe;
+  const consumoLiquidoBruto = raw_qty * (1 - retorno);
+  const consumoLiquidoPrev = prev_qty * (1 - retorno);
+
+  if (consumoLiquidoBruto <= 0 || consumoLiquidoPrev <= 0) {
+    throw new Error("Consumo líquido inválido para estimativa");
+  }
+
+  const craftsEstimados = Math.min(
+    estoqueBruto / consumoLiquidoBruto,
+    estoqueRefAnterior / consumoLiquidoPrev,
+  );
+  const craftsValidos = Number.isFinite(craftsEstimados)
+    ? Math.max(0, craftsEstimados)
+    : 0;
+
+  const totalRefinado = Math.floor(craftsValidos);
+  const totalRefinadoEstimado = craftsValidos;
+  const consumoTotalBruto = totalRefinadoEstimado * raw_qty;
+  const consumoTotalRefAnterior = totalRefinadoEstimado * prev_qty;
+  const retornoTotalBruto = consumoTotalBruto * retorno;
+  const retornoTotalRefAnterior = consumoTotalRefAnterior * retorno;
+  const sobraBruto = Math.max(0, estoqueBruto - consumoLiquidoBruto * craftsValidos);
+  const sobraRefAnterior = Math.max(
+    0,
+    estoqueRefAnterior - consumoLiquidoPrev * craftsValidos,
+  );
+
+  return {
+    craftsEstimados: craftsValidos,
+    totalRefinado,
+    totalRefinadoEstimado,
+    retornoTotalBruto,
+    retornoTotalRefAnterior,
+    consumoTotalBruto,
+    consumoTotalRefAnterior,
+    sobraBruto,
+    sobraRefAnterior,
+  };
+}
+
+export type ResultadoRefinoEstoque = {
+  tier: string;
+  total_refinado: number;
+  total_refinado_estimado: number;
+  crafts_estimados: number;
+  retorno_total_bruto: number;
+  retorno_total_ref_anterior: number;
+  sobra_bruto_estimado: number;
+  sobra_ref_anterior_estimado: number;
+  custo_inicial: number;
+  receita_bruta: number;
+  receita_liquida: number;
+  lucro: number;
+  margem: number;
+};
+
+export function calculateRefiningProfitFromStock(
+  tier: string,
+  estoqueBruto: number,
+  estoqueRefAnterior: number,
+  precoBruto: number,
+  precoRefinadoAnterior: number,
+  precoVendaRefinado: number,
+  retorno: number = RETORNO,
+  taxaMercado: number = TAXA_MERCADO,
+): { sim: SimulacaoEstoque; resultado: ResultadoRefinoEstoque } {
+  const sim = simularRefinoPorEstoque(
+    tier,
+    estoqueBruto,
+    estoqueRefAnterior,
+    retorno,
+  );
+  const custo_inicial =
+    estoqueBruto * precoBruto + estoqueRefAnterior * precoRefinadoAnterior;
+  const receita_bruta = precoVendaRefinado * sim.totalRefinadoEstimado;
+  const receita_liquida = receita_bruta * (1 - taxaMercado);
+  const lucro = receita_liquida - custo_inicial;
+  const margem = custo_inicial > 0 ? lucro / custo_inicial : 0;
+
+  return {
+    sim,
+    resultado: {
+      tier: tier.toUpperCase(),
+      total_refinado: sim.totalRefinado,
+      total_refinado_estimado: sim.totalRefinadoEstimado,
+      crafts_estimados: sim.craftsEstimados,
+      retorno_total_bruto: sim.retornoTotalBruto,
+      retorno_total_ref_anterior: sim.retornoTotalRefAnterior,
+      sobra_bruto_estimado: sim.sobraBruto,
+      sobra_ref_anterior_estimado: sim.sobraRefAnterior,
+      custo_inicial,
+      receita_bruta,
+      receita_liquida,
+      lucro,
+      margem,
+    },
+  };
+}

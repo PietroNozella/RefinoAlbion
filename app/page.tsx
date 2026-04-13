@@ -33,29 +33,87 @@ type ApiResponse = {
   };
 };
 
+type ApiResultadoEstoque = {
+  tier: string;
+  total_refinado: number;
+  total_refinado_estimado: number;
+  crafts_estimados: number;
+  retorno_total_bruto: number;
+  retorno_total_ref_anterior: number;
+  sobra_bruto_estimado: number;
+  sobra_ref_anterior_estimado: number;
+  custo_inicial: number;
+  receita_bruta: number;
+  receita_liquida: number;
+  lucro: number;
+  margem: number;
+};
+
+type ApiResponseEstoque = {
+  resultado: ApiResultadoEstoque;
+  comprar: {
+    estoque_bruto_inicial: number;
+    estoque_ref_anterior_inicial: number;
+    label_ref_anterior: string;
+    tier_bruto_label: string;
+  };
+  formatted: {
+    lucro: string;
+    margem: string;
+    custo_inicial: string;
+    receita_bruta: string;
+    receita_liquida: string;
+    total_refinado_estimado: string;
+    crafts_estimados: string;
+    retorno_total_bruto: string;
+    retorno_total_ref_anterior: string;
+    sobra_bruto_estimado: string;
+    sobra_ref_anterior_estimado: string;
+  };
+};
+
+type Modo = "lote" | "estoque";
+
 export default function Home() {
+  const [modo, setModo] = useState<Modo>("lote");
   const [tier, setTier] = useState("T5");
   const [precoBruto, setPrecoBruto] = useState("");
   const [precoRefAnt, setPrecoRefAnt] = useState("");
   const [precoVenda, setPrecoVenda] = useState("");
   const [quantidade, setQuantidade] = useState("");
+  const [estoqueBruto, setEstoqueBruto] = useState("");
+  const [estoqueRefAnt, setEstoqueRefAnt] = useState("");
   const [usarFoco, setUsarFoco] = useState(false);
   const [premium, setPremium] = useState(true);
 
-  const [data, setData] = useState<ApiResponse | null>(null);
+  const [data, setData] = useState<ApiResponse | ApiResponseEstoque | null>(
+    null,
+  );
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
-  const canSubmit =
+  const setModoSafe = (m: Modo) => {
+    setModo(m);
+    setData(null);
+    setError(null);
+  };
+
+  const canSubmitLote =
     precoBruto.trim() !== "" &&
     precoRefAnt.trim() !== "" &&
     precoVenda.trim() !== "" &&
     quantidade.trim() !== "";
 
+  const canSubmitEstoque =
+    precoBruto.trim() !== "" &&
+    precoRefAnt.trim() !== "" &&
+    precoVenda.trim() !== "" &&
+    (estoqueBruto.trim() !== "" || estoqueRefAnt.trim() !== "");
+
   const runCalc = useCallback(async () => {
     setError(null);
     setData(null);
-    if (!canSubmit) {
+    if (!canSubmitLote) {
       setError("Preencha preços e quantidade.");
       return;
     }
@@ -110,7 +168,7 @@ export default function Home() {
       setLoading(false);
     }
   }, [
-    canSubmit,
+    canSubmitLote,
     tier,
     precoBruto,
     precoRefAnt,
@@ -119,6 +177,92 @@ export default function Home() {
     usarFoco,
     premium,
   ]);
+
+  const runCalcEstoque = useCallback(async () => {
+    setError(null);
+    setData(null);
+    if (!canSubmitEstoque) {
+      setError("Preencha preços e estoques (pelo menos um recurso).");
+      return;
+    }
+    const pb = Number(precoBruto);
+    const pra = Number(precoRefAnt);
+    const pv = Number(precoVenda);
+    const eb = Math.trunc(Number(estoqueBruto === "" ? "0" : estoqueBruto));
+    const er = Math.trunc(Number(estoqueRefAnt === "" ? "0" : estoqueRefAnt));
+    if ([pb, pra, pv].some((n) => Number.isNaN(n))) {
+      setError("Use apenas números válidos nos preços.");
+      return;
+    }
+    if (Number.isNaN(eb) || Number.isNaN(er) || eb < 0 || er < 0) {
+      setError("Estoques devem ser inteiros ≥ 0.");
+      return;
+    }
+    if (eb === 0 && er === 0) {
+      setError("Informe estoque bruto ou refinado anterior (pelo menos um > 0).");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const res = await fetch("/api/calculate-stock", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          tier,
+          estoque_bruto: eb,
+          estoque_ref_anterior: er,
+          preco_bruto: pb,
+          preco_refinado_anterior: pra,
+          preco_venda_refinado: pv,
+          usar_foco: usarFoco,
+          premium,
+        }),
+      });
+      let json: (ApiResponseEstoque & { error?: string }) | null = null;
+      try {
+        json = (await res.json()) as ApiResponseEstoque & { error?: string };
+      } catch {
+        setError(`Resposta inválida (${res.status}).`);
+        return;
+      }
+      if (!json) return;
+      if (!res.ok) {
+        setError(json.error ?? `Erro ${res.status}`);
+        return;
+      }
+      if ("error" in json && json.error) {
+        setError(json.error);
+        return;
+      }
+      setData(json as ApiResponseEstoque);
+    } catch {
+      setError("Não foi possível chamar a API.");
+    } finally {
+      setLoading(false);
+    }
+  }, [
+    canSubmitEstoque,
+    tier,
+    precoBruto,
+    precoRefAnt,
+    precoVenda,
+    estoqueBruto,
+    estoqueRefAnt,
+    usarFoco,
+    premium,
+  ]);
+
+  const onCalcular = () => {
+    if (modo === "lote") runCalc();
+    else runCalcEstoque();
+  };
+
+  const canSubmit = modo === "lote" ? canSubmitLote : canSubmitEstoque;
+
+  const isDataLote = (
+    d: ApiResponse | ApiResponseEstoque,
+  ): d is ApiResponse => "quantidade" in d.resultado;
 
   return (
     <main className="mx-auto flex min-h-dvh max-w-lg flex-col gap-8 px-4 py-10">
@@ -130,6 +274,31 @@ export default function Home() {
       </header>
 
       <section className="space-y-4 rounded-xl border border-zinc-800 bg-zinc-900/50 p-4 shadow-xl">
+        <div className="flex rounded-lg border border-zinc-700 bg-zinc-950/80 p-1">
+          <button
+            type="button"
+            onClick={() => setModoSafe("lote")}
+            className={`flex-1 rounded-md px-3 py-2 text-sm font-medium transition ${
+              modo === "lote"
+                ? "bg-emerald-600 text-white"
+                : "text-zinc-400 hover:text-zinc-200"
+            }`}
+          >
+            Por quantidade
+          </button>
+          <button
+            type="button"
+            onClick={() => setModoSafe("estoque")}
+            className={`flex-1 rounded-md px-3 py-2 text-sm font-medium transition ${
+              modo === "estoque"
+                ? "bg-emerald-600 text-white"
+                : "text-zinc-400 hover:text-zinc-200"
+            }`}
+          >
+            Por estoque (re-refino)
+          </button>
+        </div>
+
         <label className="block space-y-1">
           <span className="text-xs font-medium uppercase tracking-wide text-zinc-500">
             Tier
@@ -166,13 +335,38 @@ export default function Home() {
             onChange={setPrecoVenda}
             inputMode="decimal"
           />
-          <Field
-            label="Quantidade (refinado desejado)"
-            value={quantidade}
-            onChange={setQuantidade}
-            inputMode="numeric"
-          />
+          {modo === "lote" ? (
+            <Field
+              label="Quantidade (refinado desejado)"
+              value={quantidade}
+              onChange={setQuantidade}
+              inputMode="numeric"
+            />
+          ) : (
+            <>
+              <Field
+                label="Estoque bruto (inicial)"
+                value={estoqueBruto}
+                onChange={setEstoqueBruto}
+                inputMode="numeric"
+              />
+              <Field
+                label="Estoque refinado anterior (inicial)"
+                value={estoqueRefAnt}
+                onChange={setEstoqueRefAnt}
+                inputMode="numeric"
+              />
+            </>
+          )}
         </div>
+
+        {modo === "estoque" && (
+          <p className="text-xs leading-relaxed text-zinc-500">
+            Estimativa acumulada: usa consumo líquido esperado com retorno
+            (foco ou não) para projetar múltiplos re-refinos até o esgotamento.
+            Use preço 0 para recurso coletado.
+          </p>
+        )}
 
         <div className="flex flex-wrap gap-4">
           <label className="flex cursor-pointer items-center gap-2 text-sm">
@@ -197,7 +391,7 @@ export default function Home() {
 
         <button
           type="button"
-          onClick={runCalc}
+          onClick={onCalcular}
           disabled={loading || !canSubmit}
           className="w-full rounded-lg bg-emerald-600 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-emerald-500 disabled:cursor-not-allowed disabled:opacity-40"
         >
@@ -206,7 +400,9 @@ export default function Home() {
 
         {!canSubmit && (
           <p className="text-center text-sm text-zinc-500">
-            Preencha preços e quantidade para ver o resultado.
+            {modo === "lote"
+              ? "Preencha preços e quantidade para ver o resultado."
+              : "Preencha preços e estoques iniciais (pelo menos um recurso)."}
           </p>
         )}
         {error && (
@@ -216,7 +412,7 @@ export default function Home() {
         )}
       </section>
 
-      {data && (
+      {data && isDataLote(data) && (
         <>
           <section className="space-y-3">
             <h2 className="text-lg font-medium text-white">Comprar</h2>
@@ -267,6 +463,99 @@ export default function Home() {
           </section>
         </>
       )}
+
+      {data && !isDataLote(data) && (
+        <>
+          <section className="space-y-3">
+            <h2 className="text-lg font-medium text-white">Estoque inicial</h2>
+            <div className="grid grid-cols-2 gap-3">
+              <Metric
+                label={data.comprar.tier_bruto_label}
+                value={String(data.comprar.estoque_bruto_inicial)}
+              />
+              <Metric
+                label={data.comprar.label_ref_anterior}
+                value={String(data.comprar.estoque_ref_anterior_inicial)}
+              />
+            </div>
+          </section>
+
+          <section className="space-y-3">
+            <h2 className="text-lg font-medium text-white">Estimativa</h2>
+            <div className="grid grid-cols-2 gap-3">
+              <Metric
+                label="Refinados estimados"
+                value={data.formatted.total_refinado_estimado}
+                accent
+              />
+              <Metric
+                label="Refinados inteiros (base)"
+                value={String(data.resultado.total_refinado)}
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <Metric
+                label="Crafts estimados"
+                value={data.formatted.crafts_estimados}
+                accent
+              />
+              <Metric
+                label="Retorno total bruto"
+                value={data.formatted.retorno_total_bruto}
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <Metric
+                label={`Retorno total ${data.comprar.label_ref_anterior}`}
+                value={data.formatted.retorno_total_ref_anterior}
+              />
+              <Metric
+                label="Sobra bruto (estimada)"
+                value={data.formatted.sobra_bruto_estimado}
+              />
+            </div>
+            <div className="grid grid-cols-1 gap-3">
+              <Metric
+                label={`Sobra ${data.comprar.label_ref_anterior} (estimada)`}
+                value={data.formatted.sobra_ref_anterior_estimado}
+              />
+            </div>
+          </section>
+
+          <section className="space-y-3">
+            <h2 className="text-lg font-medium text-white">Resultado</h2>
+            <div className="grid grid-cols-2 gap-3">
+              <Metric label="Lucro" value={data.formatted.lucro} accent />
+              <Metric label="Margem" value={data.formatted.margem} accent />
+            </div>
+            <p className="text-sm text-zinc-400">
+              <span className="text-zinc-300">Tier:</span>{" "}
+              {data.resultado.tier}
+              <span className="mx-2 text-zinc-600">·</span>
+              <span className="text-zinc-300">Custo inicial (estoque):</span>{" "}
+              {data.formatted.custo_inicial}
+            </p>
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              <div className="space-y-2 rounded-lg border border-zinc-800 bg-zinc-900/30 p-3">
+                <Row
+                  label="Custo inicial (comprado)"
+                  value={data.formatted.custo_inicial}
+                />
+              </div>
+              <div className="space-y-2 rounded-lg border border-zinc-800 bg-zinc-900/30 p-3">
+                <Row
+                  label="Receita bruta"
+                  value={data.formatted.receita_bruta}
+                />
+                <Row
+                  label="Receita líquida"
+                  value={data.formatted.receita_liquida}
+                />
+              </div>
+            </div>
+          </section>
+        </>
+      )}
     </main>
   );
 }
@@ -284,7 +573,9 @@ function Field({
 }) {
   return (
     <label className="block space-y-1">
-      <span className="text-xs font-medium text-zinc-500">{label}</span>
+      <span className="text-xs font-medium uppercase tracking-wide text-zinc-500">
+        {label}
+      </span>
       <input
         type="text"
         inputMode={inputMode}
