@@ -3,8 +3,13 @@
 import { useCallback, useState } from "react";
 
 const TIER_OPTIONS = ["T3", "T4", "T5", "T6", "T7", "T8"];
-const DEFAULT_BONUS_SEM_FOCO = "58";
-const DEFAULT_BONUS_COM_FOCO = "117.3913043478261";
+const DEFAULT_RETORNO_SEM_FOCO = "36.71";
+const DEFAULT_RETORNO_COM_FOCO = "54";
+
+function productionBonusFromReturnPercent(returnPercent: number): number {
+  const returnRate = returnPercent / 100;
+  return (1 / (1 - returnRate) - 1) * 100;
+}
 
 type ApiResultado = {
   tier: string;
@@ -148,8 +153,12 @@ export default function Home() {
   const [taxaEstacao, setTaxaEstacao] = useState("");
   const [custoBaseFoco, setCustoBaseFoco] = useState("");
   const [eficienciaFoco, setEficienciaFoco] = useState("");
-  const [bonusSemFoco, setBonusSemFoco] = useState(DEFAULT_BONUS_SEM_FOCO);
-  const [bonusComFoco, setBonusComFoco] = useState(DEFAULT_BONUS_COM_FOCO);
+  const [retornoSemFoco, setRetornoSemFoco] = useState(
+    DEFAULT_RETORNO_SEM_FOCO,
+  );
+  const [retornoComFoco, setRetornoComFoco] = useState(
+    DEFAULT_RETORNO_COM_FOCO,
+  );
   const [quantidade, setQuantidade] = useState("");
   const [estoqueBruto, setEstoqueBruto] = useState("");
   const [estoqueRefAnt, setEstoqueRefAnt] = useState("");
@@ -194,14 +203,14 @@ export default function Home() {
     const te = Number(taxaEstacao.trim() === "" ? "0" : taxaEstacao);
     const cbf = Number(custoBaseFoco.trim() === "" ? "0" : custoBaseFoco);
     const ef = Number(eficienciaFoco.trim() === "" ? "0" : eficienciaFoco);
-    const bsf = Number(
-      bonusSemFoco.trim() === "" ? DEFAULT_BONUS_SEM_FOCO : bonusSemFoco,
+    const rsf = Number(
+      retornoSemFoco.trim() === "" ? DEFAULT_RETORNO_SEM_FOCO : retornoSemFoco,
     );
-    const bcf = Number(
-      bonusComFoco.trim() === "" ? DEFAULT_BONUS_COM_FOCO : bonusComFoco,
+    const rcf = Number(
+      retornoComFoco.trim() === "" ? DEFAULT_RETORNO_COM_FOCO : retornoComFoco,
     );
     const q = Number(quantidade);
-    if ([pb, pra, pv, te, cbf, ef, bsf, bcf, q].some((n) => Number.isNaN(n))) {
+    if ([pb, pra, pv, te, cbf, ef, rsf, rcf, q].some((n) => Number.isNaN(n))) {
       setError("Use apenas números válidos.");
       return;
     }
@@ -213,8 +222,8 @@ export default function Home() {
       setError("Custo base e eficiencia de foco devem ser numeros >= 0.");
       return;
     }
-    if (bsf < 0 || bcf < 0) {
-      setError("Bonus de producao deve ser numero >= 0.");
+    if (rsf < 0 || rcf < 0 || rsf >= 100 || rcf >= 100) {
+      setError("Retorno de materiais deve ser um percentual entre 0 e 99,99.");
       return;
     }
     if (q < 1 || !Number.isInteger(q)) {
@@ -235,8 +244,8 @@ export default function Home() {
           station_fee_per_item: te,
           base_focus_cost: cbf,
           focus_efficiency: ef,
-          production_bonus_without_focus: bsf,
-          production_bonus_with_focus: bcf,
+          production_bonus_without_focus: productionBonusFromReturnPercent(rsf),
+          production_bonus_with_focus: productionBonusFromReturnPercent(rcf),
           quantidade: q,
           premium,
         }),
@@ -272,8 +281,8 @@ export default function Home() {
     taxaEstacao,
     custoBaseFoco,
     eficienciaFoco,
-    bonusSemFoco,
-    bonusComFoco,
+    retornoSemFoco,
+    retornoComFoco,
     quantidade,
     premium,
   ]);
@@ -479,15 +488,15 @@ export default function Home() {
             {modo === "lote" && (
               <>
                 <Field
-                  label="Bonus sem foco"
-                  value={bonusSemFoco}
-                  onChange={setBonusSemFoco}
+                  label="Retorno sem foco (%)"
+                  value={retornoSemFoco}
+                  onChange={setRetornoSemFoco}
                   inputMode="decimal"
                 />
                 <Field
-                  label="Bonus com foco"
-                  value={bonusComFoco}
-                  onChange={setBonusComFoco}
+                  label="Retorno com foco (%)"
+                  value={retornoComFoco}
+                  onChange={setRetornoComFoco}
                   inputMode="decimal"
                 />
                 <Field
