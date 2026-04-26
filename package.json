@@ -6,6 +6,9 @@
     "dev": "next dev --turbopack",
     "build": "next build",
     "start": "next start",
+    "test": "npm run test:refino",
+    "typecheck": "tsc --noEmit",
+    "test:refino": "tsc -p tsconfig.test.json && node .tmp-tests/tests/refino.test.js",
     "lint": "next lint"
   },
   "dependencies": {

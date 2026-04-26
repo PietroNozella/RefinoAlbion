@@ -2,10 +2,13 @@
  * Espelha calculator.py, recipes.py e formatting.py — manter em sincronia.
  */
 
-export const RETORNO = 0.367;
-export const RETORNO_FOCO = 0.54;
+export const PRODUCTION_BONUS_SEM_FOCO = 58;
+export const PRODUCTION_BONUS_COM_FOCO = 117.3913043478261;
+export const RETORNO = rrrFromBonus(PRODUCTION_BONUS_SEM_FOCO);
+export const RETORNO_FOCO = rrrFromBonus(PRODUCTION_BONUS_COM_FOCO);
 export const TAXA_MERCADO = 0.065;
 export const TAXA_MERCADO_SEM_PREMIUM = 0.105;
+export const TAXA_ESTACAO_PADRAO = 0;
 
 const RECIPES: Record<string, { raw_qty: number; prev_qty: number }> = {
   T3: { raw_qty: 2, prev_qty: 1 },
@@ -18,6 +21,36 @@ const RECIPES: Record<string, { raw_qty: number; prev_qty: number }> = {
 
 export function getRecipe(tier: string) {
   return RECIPES[tier.toUpperCase()] ?? null;
+}
+
+export type MaterialCostInput = {
+  qty: number;
+  price: number;
+};
+
+export function rrrFromBonus(productionBonusPercent: number): number {
+  return 1 - 1 / (1 + productionBonusPercent / 100);
+}
+
+export function effectiveMaterialCost(
+  recipe: MaterialCostInput[],
+  rrr: number,
+): number {
+  return recipe.reduce(
+    (total, item) => total + item.qty * item.price * (1 - rrr),
+    0,
+  );
+}
+
+export function focusCost(baseFocusCost: number, focusEfficiency: number): number {
+  return Math.ceil(baseFocusCost * 0.5 ** (focusEfficiency / 10000));
+}
+
+export function silverPerFocus(extraProfitFromFocus: number, focusSpent: number): number {
+  if (focusSpent <= 0) {
+    return 0;
+  }
+  return extraProfitFromFocus / focusSpent;
 }
 
 export function formatarCompacto(n: number): string {
@@ -53,10 +86,23 @@ export type ResultadoRefino = {
   quantidade: number;
   custo_bruto: number;
   custo_liquido: number;
+  materiais: MaterialBreakdown[];
+  taxa_estacao: number;
   receita_bruta: number;
   receita_liquida: number;
   lucro: number;
   margem: number;
+};
+
+export type MaterialBreakdown = {
+  tipo: "raw" | "previous";
+  quantidade_por_item: number;
+  quantidade_necessaria: number;
+  preco_unitario: number;
+  custo_bruto: number;
+  quantidade_retornada: number;
+  quantidade_consumida: number;
+  custo_efetivo: number;
 };
 
 export function calculateRefiningProfit(
@@ -67,6 +113,7 @@ export function calculateRefiningProfit(
   quantidade: number,
   retorno: number = RETORNO,
   taxaMercado: number = TAXA_MERCADO,
+  taxaEstacaoPorItem: number = TAXA_ESTACAO_PADRAO,
 ): ResultadoRefino {
   const recipe = getRecipe(tier);
   if (!recipe) {
@@ -74,15 +121,31 @@ export function calculateRefiningProfit(
   }
   const { raw_qty, prev_qty } = recipe;
 
+  const materialRecipe = [
+    { qty: raw_qty, price: precoBruto },
+    { qty: prev_qty, price: precoRefinadoAnterior },
+  ];
   const custoBrutoVal =
     raw_qty * precoBruto * quantidade +
     prev_qty * precoRefinadoAnterior * quantidade;
-  const custoLiquido = custoBrutoVal * (1 - retorno);
+  const custoLiquido =
+    effectiveMaterialCost(materialRecipe, retorno) * quantidade;
+  const materiais: MaterialBreakdown[] = [
+    buildMaterialBreakdown("raw", raw_qty, precoBruto, quantidade, retorno),
+    buildMaterialBreakdown(
+      "previous",
+      prev_qty,
+      precoRefinadoAnterior,
+      quantidade,
+      retorno,
+    ),
+  ];
 
   const receitaBruta = precoVendaRefinado * quantidade;
   const receitaLiquida = receitaBruta * (1 - taxaMercado);
+  const taxaEstacao = quantidade * taxaEstacaoPorItem;
 
-  const lucro = receitaLiquida - custoLiquido;
+  const lucro = receitaLiquida - custoLiquido - taxaEstacao;
   const margem = custoLiquido > 0 ? lucro / custoLiquido : 0;
 
   return {
@@ -90,10 +153,92 @@ export function calculateRefiningProfit(
     quantidade,
     custo_bruto: custoBrutoVal,
     custo_liquido: custoLiquido,
+    materiais,
+    taxa_estacao: taxaEstacao,
     receita_bruta: receitaBruta,
     receita_liquida: receitaLiquida,
     lucro,
     margem,
+  };
+}
+
+function buildMaterialBreakdown(
+  tipo: MaterialBreakdown["tipo"],
+  quantidadePorItem: number,
+  precoUnitario: number,
+  quantidade: number,
+  retorno: number,
+): MaterialBreakdown {
+  const quantidadeNecessaria = quantidadePorItem * quantidade;
+  const quantidadeRetornada = quantidadeNecessaria * retorno;
+  const quantidadeConsumida = quantidadeNecessaria * (1 - retorno);
+
+  return {
+    tipo,
+    quantidade_por_item: quantidadePorItem,
+    quantidade_necessaria: quantidadeNecessaria,
+    preco_unitario: precoUnitario,
+    custo_bruto: quantidadeNecessaria * precoUnitario,
+    quantidade_retornada: quantidadeRetornada,
+    quantidade_consumida: quantidadeConsumida,
+    custo_efetivo: quantidadeConsumida * precoUnitario,
+  };
+}
+
+export type ComparacaoRefino = {
+  withoutFocus: ResultadoRefino;
+  withFocus: ResultadoRefino;
+  extraProfitFromFocus: number;
+  focusCostPerItem: number;
+  totalFocusSpent: number;
+  silverPerFocus: number;
+};
+
+export function compareRefiningProfit(
+  tier: string,
+  precoBruto: number,
+  precoRefinadoAnterior: number,
+  precoVendaRefinado: number,
+  quantidade: number,
+  taxaMercado: number = TAXA_MERCADO,
+  taxaEstacaoPorItem: number = TAXA_ESTACAO_PADRAO,
+  baseFocusCost: number = 0,
+  focusEfficiency: number = 0,
+  productionBonusWithoutFocus: number = PRODUCTION_BONUS_SEM_FOCO,
+  productionBonusWithFocus: number = PRODUCTION_BONUS_COM_FOCO,
+): ComparacaoRefino {
+  const withoutFocus = calculateRefiningProfit(
+    tier,
+    precoBruto,
+    precoRefinadoAnterior,
+    precoVendaRefinado,
+    quantidade,
+    rrrFromBonus(productionBonusWithoutFocus),
+    taxaMercado,
+    taxaEstacaoPorItem,
+  );
+  const withFocus = calculateRefiningProfit(
+    tier,
+    precoBruto,
+    precoRefinadoAnterior,
+    precoVendaRefinado,
+    quantidade,
+    rrrFromBonus(productionBonusWithFocus),
+    taxaMercado,
+    taxaEstacaoPorItem,
+  );
+  const focusCostPerItem = focusCost(baseFocusCost, focusEfficiency);
+  const totalFocusSpent = focusCostPerItem * quantidade;
+
+  const extraProfitFromFocus = withFocus.lucro - withoutFocus.lucro;
+
+  return {
+    withoutFocus,
+    withFocus,
+    extraProfitFromFocus,
+    focusCostPerItem,
+    totalFocusSpent,
+    silverPerFocus: silverPerFocus(extraProfitFromFocus, totalFocusSpent),
   };
 }
 
@@ -172,13 +317,23 @@ export type ResultadoRefinoEstoque = {
   crafts_estimados: number;
   retorno_total_bruto: number;
   retorno_total_ref_anterior: number;
+  consumo_efetivo_bruto: number;
+  consumo_efetivo_ref_anterior: number;
   sobra_bruto_estimado: number;
   sobra_ref_anterior_estimado: number;
+  valor_sobra_bruto: number;
+  valor_sobra_ref_anterior: number;
+  valor_sobra: number;
+  valor_total_estoque: number;
   custo_inicial: number;
+  custo_consumido: number;
+  taxa_estacao: number;
   receita_bruta: number;
   receita_liquida: number;
   lucro: number;
   margem: number;
+  lucro_sobre_estoque_total: number;
+  margem_sobre_estoque_total: number;
 };
 
 export function calculateRefiningProfitFromStock(
@@ -190,6 +345,7 @@ export function calculateRefiningProfitFromStock(
   precoVendaRefinado: number,
   retorno: number = RETORNO,
   taxaMercado: number = TAXA_MERCADO,
+  taxaEstacaoPorItem: number = TAXA_ESTACAO_PADRAO,
 ): { sim: SimulacaoEstoque; resultado: ResultadoRefinoEstoque } {
   const sim = simularRefinoPorEstoque(
     tier,
@@ -199,10 +355,28 @@ export function calculateRefiningProfitFromStock(
   );
   const custo_inicial =
     estoqueBruto * precoBruto + estoqueRefAnterior * precoRefinadoAnterior;
+  const consumo_efetivo_bruto = sim.consumoTotalBruto * (1 - retorno);
+  const consumo_efetivo_ref_anterior =
+    sim.consumoTotalRefAnterior * (1 - retorno);
+  const custo_consumido =
+    consumo_efetivo_bruto * precoBruto +
+    consumo_efetivo_ref_anterior * precoRefinadoAnterior;
+  const valor_sobra_bruto = sim.sobraBruto * precoBruto;
+  const valor_sobra_ref_anterior =
+    sim.sobraRefAnterior * precoRefinadoAnterior;
+  const valor_sobra = valor_sobra_bruto + valor_sobra_ref_anterior;
+  const valor_total_estoque = custo_inicial;
   const receita_bruta = precoVendaRefinado * sim.totalRefinadoEstimado;
   const receita_liquida = receita_bruta * (1 - taxaMercado);
-  const lucro = receita_liquida - custo_inicial;
-  const margem = custo_inicial > 0 ? lucro / custo_inicial : 0;
+  const taxa_estacao = sim.totalRefinadoEstimado * taxaEstacaoPorItem;
+  const lucro = receita_liquida - custo_consumido - taxa_estacao;
+  const margem = custo_consumido > 0 ? lucro / custo_consumido : 0;
+  const lucro_sobre_estoque_total =
+    receita_liquida + valor_sobra - valor_total_estoque - taxa_estacao;
+  const margem_sobre_estoque_total =
+    valor_total_estoque > 0
+      ? lucro_sobre_estoque_total / valor_total_estoque
+      : 0;
 
   return {
     sim,
@@ -213,13 +387,23 @@ export function calculateRefiningProfitFromStock(
       crafts_estimados: sim.craftsEstimados,
       retorno_total_bruto: sim.retornoTotalBruto,
       retorno_total_ref_anterior: sim.retornoTotalRefAnterior,
+      consumo_efetivo_bruto,
+      consumo_efetivo_ref_anterior,
       sobra_bruto_estimado: sim.sobraBruto,
       sobra_ref_anterior_estimado: sim.sobraRefAnterior,
+      valor_sobra_bruto,
+      valor_sobra_ref_anterior,
+      valor_sobra,
+      valor_total_estoque,
       custo_inicial,
+      custo_consumido,
+      taxa_estacao,
       receita_bruta,
       receita_liquida,
       lucro,
       margem,
+      lucro_sobre_estoque_total,
+      margem_sobre_estoque_total,
     },
   };
 }

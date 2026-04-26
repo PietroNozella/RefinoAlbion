@@ -1,10 +1,12 @@
 import { NextResponse } from "next/server";
 import {
-  RETORNO,
-  RETORNO_FOCO,
+  MaterialBreakdown,
+  PRODUCTION_BONUS_COM_FOCO,
+  PRODUCTION_BONUS_SEM_FOCO,
   TAXA_MERCADO,
   TAXA_MERCADO_SEM_PREMIUM,
-  calculateRefiningProfit,
+  ResultadoRefino,
+  compareRefiningProfit,
   formatarCompacto,
   getRecipe,
 } from "@/lib/refino";
@@ -33,7 +35,11 @@ export async function POST(request: Request) {
   let preco_refinado_anterior: number;
   let preco_venda_refinado: number;
   let quantidade: number;
-  let usar_foco: boolean;
+  let station_fee_per_item: number;
+  let base_focus_cost: number;
+  let focus_efficiency: number;
+  let production_bonus_without_focus: number;
+  let production_bonus_with_focus: number;
   let premium: boolean;
 
   try {
@@ -42,12 +48,30 @@ export async function POST(request: Request) {
     preco_refinado_anterior = Number(data.preco_refinado_anterior);
     preco_venda_refinado = Number(data.preco_venda_refinado);
     quantidade = Math.trunc(Number(data.quantidade));
-    usar_foco = Boolean(data.usar_foco);
+    station_fee_per_item = Number(data.station_fee_per_item ?? 0);
+    base_focus_cost = Number(data.base_focus_cost ?? 0);
+    focus_efficiency = Number(data.focus_efficiency ?? 0);
+    production_bonus_without_focus = Number(
+      data.production_bonus_without_focus ?? PRODUCTION_BONUS_SEM_FOCO,
+    );
+    production_bonus_with_focus = Number(
+      data.production_bonus_with_focus ?? PRODUCTION_BONUS_COM_FOCO,
+    );
     premium = data.premium !== undefined ? Boolean(data.premium) : true;
     if (
       Number.isNaN(preco_bruto) ||
       Number.isNaN(preco_refinado_anterior) ||
       Number.isNaN(preco_venda_refinado) ||
+      Number.isNaN(station_fee_per_item) ||
+      station_fee_per_item < 0 ||
+      Number.isNaN(base_focus_cost) ||
+      base_focus_cost < 0 ||
+      Number.isNaN(focus_efficiency) ||
+      focus_efficiency < 0 ||
+      Number.isNaN(production_bonus_without_focus) ||
+      production_bonus_without_focus < 0 ||
+      Number.isNaN(production_bonus_with_focus) ||
+      production_bonus_with_focus < 0 ||
       Number.isNaN(quantidade) ||
       quantidade < 1
     ) {
@@ -63,19 +87,22 @@ export async function POST(request: Request) {
     );
   }
 
-  const retorno = usar_foco ? RETORNO_FOCO : RETORNO;
   const taxa_mercado = premium ? TAXA_MERCADO : TAXA_MERCADO_SEM_PREMIUM;
 
-  let resultado;
+  let comparison;
   try {
-    resultado = calculateRefiningProfit(
+    comparison = compareRefiningProfit(
       tier,
       preco_bruto,
       preco_refinado_anterior,
       preco_venda_refinado,
       quantidade,
-      retorno,
       taxa_mercado,
+      station_fee_per_item,
+      base_focus_cost,
+      focus_efficiency,
+      production_bonus_without_focus,
+      production_bonus_with_focus,
     );
   } catch (e) {
     const msg = e instanceof Error ? e.message : "Erro";
@@ -95,10 +122,40 @@ export async function POST(request: Request) {
   const qtdBruto = recipe.raw_qty * qtdSaida;
   const qtdRefAnterior = recipe.prev_qty * qtdSaida;
 
-  const margemStr = `${(resultado.margem * 100).toFixed(2)}%`;
+  const formatMaterial = (material: MaterialBreakdown) => ({
+    tipo: material.tipo,
+    label:
+      material.tipo === "raw"
+        ? `${tier.toUpperCase()} bruto`
+        : labelRefAnterior,
+    quantidade_necessaria: material.quantidade_necessaria.toFixed(2),
+    preco_unitario: formatarCompacto(material.preco_unitario),
+    custo_bruto: formatarCompacto(material.custo_bruto),
+    quantidade_retornada: material.quantidade_retornada.toFixed(2),
+    quantidade_consumida: material.quantidade_consumida.toFixed(2),
+    custo_efetivo: formatarCompacto(material.custo_efetivo),
+  });
+
+  const formatResult = (resultado: ResultadoRefino) => ({
+    lucro: formatarCompacto(resultado.lucro),
+    margem: `${(resultado.margem * 100).toFixed(2)}%`,
+    custo_bruto: formatarCompacto(resultado.custo_bruto),
+    custo_liquido: formatarCompacto(resultado.custo_liquido),
+    materiais: resultado.materiais.map(formatMaterial),
+    taxa_estacao: formatarCompacto(resultado.taxa_estacao),
+    receita_bruta: formatarCompacto(resultado.receita_bruta),
+    receita_liquida: formatarCompacto(resultado.receita_liquida),
+  });
 
   const payload = {
-    resultado,
+    resultado: {
+      without_focus: comparison.withoutFocus,
+      with_focus: comparison.withFocus,
+      extra_profit_from_focus: comparison.extraProfitFromFocus,
+      focus_cost_per_item: comparison.focusCostPerItem,
+      total_focus_spent: comparison.totalFocusSpent,
+      silver_per_focus: comparison.silverPerFocus,
+    },
     comprar: {
       qtd_bruto: qtdBruto,
       qtd_ref_anterior: qtdRefAnterior,
@@ -106,12 +163,16 @@ export async function POST(request: Request) {
       tier_bruto_label: `${tier.toUpperCase()} bruto`,
     },
     formatted: {
-      lucro: formatarCompacto(resultado.lucro),
-      margem: margemStr,
-      custo_bruto: formatarCompacto(resultado.custo_bruto),
-      custo_liquido: formatarCompacto(resultado.custo_liquido),
-      receita_bruta: formatarCompacto(resultado.receita_bruta),
-      receita_liquida: formatarCompacto(resultado.receita_liquida),
+      without_focus: formatResult(comparison.withoutFocus),
+      with_focus: formatResult(comparison.withFocus),
+      extra_profit_from_focus: formatarCompacto(comparison.extraProfitFromFocus),
+      focus_cost_per_item: String(comparison.focusCostPerItem),
+      total_focus_spent: String(comparison.totalFocusSpent),
+      silver_per_focus: formatarCompacto(comparison.silverPerFocus),
+      focus_status:
+        comparison.silverPerFocus > 0
+          ? "Foco aumenta o lucro neste cenÃ¡rio."
+          : "Foco nÃ£o compensa neste cenÃ¡rio.",
     },
   };
 
