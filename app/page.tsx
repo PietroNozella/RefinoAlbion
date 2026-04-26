@@ -684,7 +684,7 @@ export default function Home() {
                   <p className="text-lg font-bold tabular-nums text-zinc-100">
                     {data.formatted.without_focus.lucro}
                   </p>
-                  <p className="text-sm tabular-nums text-zinc-400">
+                  <p className={`text-sm tabular-nums ${verdictMeta(classifyVerdict(data.resultado.without_focus.margem)).text}`}>
                     {data.formatted.without_focus.margem}
                   </p>
                 </div>
@@ -701,7 +701,7 @@ export default function Home() {
                   }`}>
                     {data.formatted.with_focus.lucro}
                   </p>
-                  <p className="text-sm tabular-nums text-zinc-400">
+                  <p className={`text-sm tabular-nums ${verdictMeta(classifyVerdict(data.resultado.with_focus.margem)).text}`}>
                     {data.formatted.with_focus.margem}
                   </p>
                 </div>
