@@ -16,12 +16,14 @@ function productionBonusFromReturnPercent(returnPercent: number): number {
   return (1 / (1 - returnRate) - 1) * 100;
 }
 
-// Classifica o veredito a partir da margem (%): >50% verde, 15-50% amarelo, <=15% vermelho.
+// Classifica o veredito. Aceita margem decimal (ex: 0.23 = 23%).
+// SIM: >= 50% · TALVEZ: > 15% · NÃO: <= 15%
 type Verdict = "sim" | "talvez" | "nao";
 
-function classifyVerdict(margemPct: number): Verdict {
-  if (margemPct > 50) return "sim";
-  if (margemPct > 15) return "talvez";
+function classifyVerdict(margem: number): Verdict {
+  const pct = margem * 100;
+  if (pct >= 50) return "sim";
+  if (pct > 15) return "talvez";
   return "nao";
 }
 
