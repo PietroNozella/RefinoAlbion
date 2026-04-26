@@ -16,12 +16,12 @@ function productionBonusFromReturnPercent(returnPercent: number): number {
   return (1 / (1 - returnRate) - 1) * 100;
 }
 
-// Classifica o veredito a partir da margem (%): >5% verde, 0-5% amarelo, <=0 vermelho.
+// Classifica o veredito a partir da margem (%): >50% verde, 15-50% amarelo, <=15% vermelho.
 type Verdict = "sim" | "talvez" | "nao";
 
 function classifyVerdict(margemPct: number): Verdict {
-  if (margemPct > 5) return "sim";
-  if (margemPct > 0) return "talvez";
+  if (margemPct > 50) return "sim";
+  if (margemPct > 15) return "talvez";
   return "nao";
 }
 
