@@ -64,6 +64,20 @@ function verdictMeta(v: Verdict): {
   };
 }
 
+// Piso mínimo de eficiência do foco (silver por foco) para recomendá-lo.
+// Refining em Albion costuma usar 10–20 silver/focus como referência mínima.
+const SILVER_PER_FOCUS_THRESHOLD = 10;
+
+// Decide se o foco compensa: precisa render mais lucro absoluto E ter eficiência mínima.
+function recommendFocus(
+  lucroComFoco: number,
+  lucroSemFoco: number,
+  silverPorFoco: number,
+): boolean {
+  if (lucroComFoco <= lucroSemFoco) return false;
+  return silverPorFoco >= SILVER_PER_FOCUS_THRESHOLD;
+}
+
 type ApiResultado = {
   tier: string;
   quantidade: number;
@@ -627,28 +641,39 @@ export default function Home() {
       </section>
 
       {data && isDataLote(data) && (() => {
-        // Cenário recomendado = o que tem maior lucro entre com/sem foco.
-        const comFocoMelhor =
-          data.resultado.with_focus.lucro >= data.resultado.without_focus.lucro;
-        const cenario = comFocoMelhor
+        // Foco só é recomendado se rende mais lucro absoluto E tem eficiência mínima
+        // (silver/foco >= threshold). Evita recomendar foco com retorno desprezível.
+        const focoCompensa = recommendFocus(
+          data.resultado.with_focus.lucro,
+          data.resultado.without_focus.lucro,
+          data.resultado.silver_per_focus,
+        );
+        const cenario = focoCompensa
           ? data.resultado.with_focus
           : data.resultado.without_focus;
-        const cenarioFmt = comFocoMelhor
+        const cenarioFmt = focoCompensa
           ? data.formatted.with_focus
           : data.formatted.without_focus;
-        const cenarioLabel = comFocoMelhor
+        const cenarioLabel = focoCompensa
           ? "Cenário recomendado: com foco"
-          : "Cenário recomendado: sem foco";
+          : `Cenário recomendado: sem foco${
+              data.resultado.with_focus.lucro > data.resultado.without_focus.lucro
+                ? ` (foco rende só ${data.formatted.silver_per_focus} silver/foco)`
+                : ""
+            }`;
 
         return (
           <>
             <VerdictCard
               lucroFormatado={cenarioFmt.lucro}
               margem={cenario.margem}
-              silverPorFocoFormatado={
-                comFocoMelhor ? data.formatted.silver_per_focus : undefined
-              }
               cenarioLabel={cenarioLabel}
+              focoInfo={{
+                compensa: focoCompensa,
+                silverPorFoco: data.resultado.silver_per_focus,
+                silverPorFocoFormatado: data.formatted.silver_per_focus,
+                ganhoExtraFormatado: data.formatted.extra_profit_from_focus,
+              }}
             />
 
             <SummaryRow
@@ -998,16 +1023,25 @@ function Row({ label, value }: { label: string; value: string }) {
 }
 
 // Bloco principal do veredito: lucro grande, silver/foco (opcional) e badge SIM/TALVEZ/NÃO.
+// Bloco principal do veredito.
+// Separa visualmente: (1) lucro do melhor cenário, (2) badge SIM/TALVEZ/NÃO da margem,
+// (3) info do foco (compensa? eficiência? ganho extra?), (4) cenário recomendado.
+// `focoInfo` é opcional — quando ausente (modo estoque), nada de foco aparece.
 function VerdictCard({
   lucroFormatado,
   margem,
-  silverPorFocoFormatado,
   cenarioLabel,
+  focoInfo,
 }: {
   lucroFormatado: string;
   margem: number;
-  silverPorFocoFormatado?: string;
   cenarioLabel?: string;
+  focoInfo?: {
+    compensa: boolean;
+    silverPorFoco: number;
+    silverPorFocoFormatado: string;
+    ganhoExtraFormatado: string;
+  };
 }) {
   // Define o nível de recomendação a partir da margem retornada pela API.
   const verdict = classifyVerdict(margem);
@@ -1017,27 +1051,16 @@ function VerdictCard({
     <section
       className={`space-y-4 rounded-xl border ${meta.border} ${meta.bg} p-5 shadow-xl`}
     >
+      {/* (1) Lucro total — destaque máximo */}
       <div className="space-y-1">
         <p className="text-xs uppercase tracking-wide text-zinc-400">💰 Lucro</p>
-        <p
-          className={`text-4xl font-bold tabular-nums ${meta.text}`}
-        >
+        <p className={`text-4xl font-bold tabular-nums ${meta.text}`}>
           {lucroFormatado}
         </p>
       </div>
 
-      {silverPorFocoFormatado && (
-        <div className="space-y-1">
-          <p className="text-xs uppercase tracking-wide text-zinc-400">
-            ⚡ Silver por foco
-          </p>
-          <p className="text-2xl font-semibold tabular-nums text-zinc-100">
-            {silverPorFocoFormatado}
-          </p>
-        </div>
-      )}
-
-      <div className="flex items-center gap-3 pt-1">
+      {/* (2) Veredito de "vale a pena refinar" — baseado só na margem */}
+      <div className="flex items-center gap-3">
         <span className="text-xs uppercase tracking-wide text-zinc-400">
           📊 Vale a pena
         </span>
@@ -1048,6 +1071,43 @@ function VerdictCard({
         </span>
       </div>
 
+      {/* (3) Info do foco — compensa? quanto rende? quanto extra? */}
+      {focoInfo && (
+        <div className="space-y-2 rounded-lg border border-zinc-800/80 bg-zinc-950/40 p-3">
+          <div className="flex items-center justify-between gap-3">
+            <span className="text-xs uppercase tracking-wide text-zinc-400">
+              ⚡ Foco compensa?
+            </span>
+            <span
+              className={`rounded-md px-2 py-0.5 text-xs font-bold text-white ${
+                focoInfo.compensa ? "bg-emerald-600" : "bg-zinc-600"
+              }`}
+            >
+              {focoInfo.compensa ? "SIM ✓" : "NÃO ✗"}
+            </span>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <p className="text-[10px] uppercase tracking-wide text-zinc-500">
+                Eficiência (silver/foco)
+              </p>
+              <p className="mt-0.5 text-base font-semibold tabular-nums text-zinc-100">
+                {focoInfo.silverPorFocoFormatado}
+              </p>
+            </div>
+            <div>
+              <p className="text-[10px] uppercase tracking-wide text-zinc-500">
+                Ganho extra do foco
+              </p>
+              <p className="mt-0.5 text-base font-semibold tabular-nums text-zinc-100">
+                {focoInfo.ganhoExtraFormatado}
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* (4) Cenário recomendado */}
       {cenarioLabel && (
         <p className="text-xs text-zinc-400">{cenarioLabel}</p>
       )}
