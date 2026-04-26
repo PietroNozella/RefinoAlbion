@@ -662,39 +662,60 @@ export default function Home() {
                 : ""
             }`;
 
+        // Diferença de lucro entre os dois cenários (valor absoluto formatado).
+        const diffLucro = data.resultado.with_focus.lucro - data.resultado.without_focus.lucro;
+        const diffLucroFormatado = data.formatted.extra_profit_from_focus;
+        const melhorOpcao = data.resultado.with_focus.lucro >= data.resultado.without_focus.lucro
+          ? "Com foco"
+          : "Sem foco";
+
         return (
           <>
-            <VerdictCard
-              lucroFormatado={cenarioFmt.lucro}
-              margem={cenario.margem}
-              cenarioLabel={cenarioLabel}
-              focoInfo={{
-                compensa: focoCompensa,
-                silverPorFoco: data.resultado.silver_per_focus,
-                silverPorFocoFormatado: data.formatted.silver_per_focus,
-                ganhoExtraFormatado: data.formatted.extra_profit_from_focus,
-              }}
-            />
+            {/* Card principal: dois painéis lado a lado + melhor opção */}
+            <section className="space-y-3 rounded-xl border border-zinc-800 bg-zinc-900/50 p-4 shadow-xl">
+              <p className="text-sm font-medium text-zinc-200">💰 Resultado do refino</p>
 
-            <SummaryRow
-              items={[
-                { label: "Margem", value: cenarioFmt.margem },
-                { label: "Receita líquida", value: cenarioFmt.receita_liquida },
-                { label: "Custo após retorno", value: cenarioFmt.custo_liquido },
-                {
-                  label: "Quantidade",
-                  value: String(cenario.quantidade),
-                },
-                {
-                  label: "Foco total",
-                  value: data.formatted.total_focus_spent,
-                },
-                {
-                  label: "Taxa estação",
-                  value: cenarioFmt.taxa_estacao,
-                },
-              ]}
-            />
+              <div className="grid grid-cols-2 gap-3">
+                {/* Painel sem foco */}
+                <div className="space-y-1 rounded-lg border border-zinc-700 bg-zinc-900/60 p-3">
+                  <p className="text-xs font-medium text-zinc-400">Sem foco</p>
+                  <p className="text-lg font-bold tabular-nums text-zinc-100">
+                    {data.formatted.without_focus.lucro}
+                  </p>
+                  <p className="text-sm tabular-nums text-zinc-400">
+                    {data.formatted.without_focus.margem}
+                  </p>
+                </div>
+
+                {/* Painel com foco */}
+                <div className={`space-y-1 rounded-lg border p-3 ${
+                  focoCompensa
+                    ? "border-emerald-700 bg-emerald-950/30"
+                    : "border-zinc-700 bg-zinc-900/60"
+                }`}>
+                  <p className="text-xs font-medium text-zinc-400">Com foco</p>
+                  <p className={`text-lg font-bold tabular-nums ${
+                    focoCompensa ? "text-emerald-400" : "text-zinc-100"
+                  }`}>
+                    {data.formatted.with_focus.lucro}
+                  </p>
+                  <p className="text-sm tabular-nums text-zinc-400">
+                    {data.formatted.with_focus.margem}
+                  </p>
+                </div>
+              </div>
+
+              {/* Melhor opção + diferença */}
+              <div className="flex items-baseline justify-between gap-2 border-t border-zinc-800 pt-3">
+                <span className="text-sm text-zinc-300">
+                  Melhor opção:{" "}
+                  <span className="font-semibold text-zinc-100">{melhorOpcao}</span>
+                </span>
+                <span className="text-sm tabular-nums text-zinc-400">
+                  Diferença: <span className="text-zinc-200">{diffLucro >= 0 ? "+" : ""}{diffLucroFormatado}</span>
+                </span>
+              </div>
+            </section>
 
             <details className="space-y-4 rounded-xl border border-zinc-800 bg-zinc-900/30 p-4">
               <summary className="cursor-pointer text-sm font-medium text-zinc-200">
@@ -733,6 +754,14 @@ export default function Home() {
                     <Metric
                       label="Foco por item"
                       value={data.formatted.focus_cost_per_item}
+                    />
+                    <Metric
+                      label="Foco total"
+                      value={data.formatted.total_focus_spent}
+                    />
+                    <Metric
+                      label="Silver por foco"
+                      value={data.formatted.silver_per_focus}
                     />
                   </div>
                   <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
