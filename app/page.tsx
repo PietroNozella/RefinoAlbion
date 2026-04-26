@@ -11,6 +11,54 @@ function productionBonusFromReturnPercent(returnPercent: number): number {
   return (1 / (1 - returnRate) - 1) * 100;
 }
 
+// Classifica o veredito a partir da margem (%): >5% verde, 0-5% amarelo, <=0 vermelho.
+type Verdict = "sim" | "talvez" | "nao";
+
+function classifyVerdict(margemPct: number): Verdict {
+  if (margemPct > 5) return "sim";
+  if (margemPct > 0) return "talvez";
+  return "nao";
+}
+
+// Metadados visuais do veredito (texto, emoji e classes de cor Tailwind).
+function verdictMeta(v: Verdict): {
+  label: string;
+  emoji: string;
+  border: string;
+  bg: string;
+  text: string;
+  badgeBg: string;
+} {
+  if (v === "sim") {
+    return {
+      label: "SIM",
+      emoji: "🟢",
+      border: "border-emerald-700",
+      bg: "bg-emerald-950/40",
+      text: "text-emerald-400",
+      badgeBg: "bg-emerald-600",
+    };
+  }
+  if (v === "talvez") {
+    return {
+      label: "TALVEZ",
+      emoji: "🟡",
+      border: "border-amber-700",
+      bg: "bg-amber-950/40",
+      text: "text-amber-400",
+      badgeBg: "bg-amber-600",
+    };
+  }
+  return {
+    label: "NÃO",
+    emoji: "🔴",
+    border: "border-red-800",
+    bg: "bg-red-950/40",
+    text: "text-red-400",
+    badgeBg: "bg-red-600",
+  };
+}
+
 type ApiResultado = {
   tier: string;
   quantidade: number;
@@ -576,237 +624,307 @@ export default function Home() {
         )}
       </section>
 
-      {data && isDataLote(data) && (
-        <>
-          <section className="space-y-3">
-            <h2 className="text-lg font-medium text-white">Comprar</h2>
-            <div className="grid grid-cols-2 gap-3">
-              <Metric
-                label={data.comprar.tier_bruto_label}
-                value={String(data.comprar.qtd_bruto)}
-              />
-              <Metric
-                label={data.comprar.label_ref_anterior}
-                value={String(data.comprar.qtd_ref_anterior)}
-              />
-            </div>
-          </section>
+      {data && isDataLote(data) && (() => {
+        // Cenário recomendado = o que tem maior lucro entre com/sem foco.
+        const comFocoMelhor =
+          data.resultado.with_focus.lucro >= data.resultado.without_focus.lucro;
+        const cenario = comFocoMelhor
+          ? data.resultado.with_focus
+          : data.resultado.without_focus;
+        const cenarioFmt = comFocoMelhor
+          ? data.formatted.with_focus
+          : data.formatted.without_focus;
+        const cenarioLabel = comFocoMelhor
+          ? "Cenário recomendado: com foco"
+          : "Cenário recomendado: sem foco";
 
-          <section className="space-y-3">
-            <h2 className="text-lg font-medium text-white">Comparativo</h2>
-            <div className="grid grid-cols-1 gap-3">
-              <Metric
-                label="Silver por foco"
-                value={data.formatted.silver_per_focus}
-                accent={data.resultado.silver_per_focus > 0}
-              />
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-              <Metric
-                label="Lucro extra do foco"
-                value={data.formatted.extra_profit_from_focus}
-                accent
-              />
-              <Metric
-                label="Quantidade"
-                value={String(data.resultado.without_focus.quantidade)}
-              />
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-              <Metric
-                label="Foco por item"
-                value={data.formatted.focus_cost_per_item}
-              />
-              <Metric
-                label="Foco total"
-                value={data.formatted.total_focus_spent}
-              />
-            </div>
-            <p className="text-sm text-zinc-400">{data.formatted.focus_status}</p>
-            <p className="text-sm text-zinc-400">
-              <span className="text-zinc-300">Tier:</span>{" "}
-              {data.resultado.without_focus.tier}
-              <span className="mx-2 text-zinc-600">·</span>
-              <span className="text-zinc-300">Quantidade:</span>{" "}
-              {data.resultado.without_focus.quantidade}
-            </p>
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-              <div className="space-y-2 rounded-lg border border-zinc-800 bg-zinc-900/30 p-3">
-                <p className="text-sm font-medium text-zinc-200">Sem foco</p>
-                <Row label="Lucro" value={data.formatted.without_focus.lucro} />
-                <Row label="Margem" value={data.formatted.without_focus.margem} />
-                <Row label="Custo bruto" value={data.formatted.without_focus.custo_bruto} />
-                <Row
-                  label="Custo após retorno"
-                  value={data.formatted.without_focus.custo_liquido}
-                />
-                <Row
-                  label="Taxa da estaÃ§Ã£o"
-                  value={data.formatted.without_focus.taxa_estacao}
-                />
+        return (
+          <>
+            <VerdictCard
+              lucroFormatado={cenarioFmt.lucro}
+              margem={cenario.margem}
+              silverPorFocoFormatado={
+                comFocoMelhor ? data.formatted.silver_per_focus : undefined
+              }
+              cenarioLabel={cenarioLabel}
+            />
+
+            <SummaryRow
+              items={[
+                { label: "Margem", value: cenarioFmt.margem },
+                { label: "Receita líquida", value: cenarioFmt.receita_liquida },
+                { label: "Custo após retorno", value: cenarioFmt.custo_liquido },
+                {
+                  label: "Quantidade",
+                  value: String(cenario.quantidade),
+                },
+                {
+                  label: "Foco total",
+                  value: data.formatted.total_focus_spent,
+                },
+                {
+                  label: "Taxa estação",
+                  value: cenarioFmt.taxa_estacao,
+                },
+              ]}
+            />
+
+            <details className="space-y-4 rounded-xl border border-zinc-800 bg-zinc-900/30 p-4">
+              <summary className="cursor-pointer text-sm font-medium text-zinc-200">
+                Ver detalhes
+              </summary>
+
+              <div className="space-y-4 pt-4">
+                {/* Comprar: quantidade de insumos a adquirir */}
+                <section className="space-y-2">
+                  <h3 className="text-sm font-medium text-zinc-300">Comprar</h3>
+                  <div className="grid grid-cols-2 gap-3">
+                    <Metric
+                      label={data.comprar.tier_bruto_label}
+                      value={String(data.comprar.qtd_bruto)}
+                    />
+                    <Metric
+                      label={data.comprar.label_ref_anterior}
+                      value={String(data.comprar.qtd_ref_anterior)}
+                    />
+                  </div>
+                </section>
+
+                {/* Comparativo completo com/sem foco */}
+                <section className="space-y-3">
+                  <h3 className="text-sm font-medium text-zinc-300">
+                    Comparativo com/sem foco
+                  </h3>
+                  <p className="text-sm text-zinc-400">
+                    {data.formatted.focus_status}
+                  </p>
+                  <div className="grid grid-cols-2 gap-3">
+                    <Metric
+                      label="Lucro extra do foco"
+                      value={data.formatted.extra_profit_from_focus}
+                    />
+                    <Metric
+                      label="Foco por item"
+                      value={data.formatted.focus_cost_per_item}
+                    />
+                  </div>
+                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                    <div className="space-y-2 rounded-lg border border-zinc-800 bg-zinc-900/40 p-3">
+                      <p className="text-sm font-medium text-zinc-200">Sem foco</p>
+                      <Row label="Lucro" value={data.formatted.without_focus.lucro} />
+                      <Row label="Margem" value={data.formatted.without_focus.margem} />
+                      <Row label="Custo bruto" value={data.formatted.without_focus.custo_bruto} />
+                      <Row
+                        label="Custo após retorno"
+                        value={data.formatted.without_focus.custo_liquido}
+                      />
+                      <Row
+                        label="Taxa da estação"
+                        value={data.formatted.without_focus.taxa_estacao}
+                      />
+                    </div>
+                    <div className="space-y-2 rounded-lg border border-zinc-800 bg-zinc-900/40 p-3">
+                      <p className="text-sm font-medium text-zinc-200">Com foco</p>
+                      <Row label="Lucro" value={data.formatted.with_focus.lucro} />
+                      <Row label="Margem" value={data.formatted.with_focus.margem} />
+                      <Row
+                        label="Custo bruto"
+                        value={data.formatted.with_focus.custo_bruto}
+                      />
+                      <Row
+                        label="Custo após retorno"
+                        value={data.formatted.with_focus.custo_liquido}
+                      />
+                      <Row
+                        label="Taxa da estação"
+                        value={data.formatted.with_focus.taxa_estacao}
+                      />
+                    </div>
+                  </div>
+                </section>
+
+                {/* Breakdown por material — auditoria fina */}
+                <section className="space-y-3">
+                  <h3 className="text-sm font-medium text-zinc-300">
+                    Materiais
+                  </h3>
+                  <p className="text-xs text-zinc-500">
+                    O retorno reduz o consumo real dos materiais. Ele não entra
+                    como venda extra.
+                  </p>
+                  <MaterialBreakdownCard
+                    title="Materiais sem foco"
+                    materiais={data.formatted.without_focus.materiais}
+                  />
+                  <MaterialBreakdownCard
+                    title="Materiais com foco"
+                    materiais={data.formatted.with_focus.materiais}
+                  />
+                </section>
               </div>
-              <div className="space-y-2 rounded-lg border border-zinc-800 bg-zinc-900/30 p-3">
-                <p className="text-sm font-medium text-zinc-200">Com foco</p>
-                <Row label="Lucro" value={data.formatted.with_focus.lucro} />
-                <Row label="Margem" value={data.formatted.with_focus.margem} />
-                <Row
-                  label="Custo bruto"
-                  value={data.formatted.with_focus.custo_bruto}
-                />
-                <Row
-                  label="Custo após retorno"
-                  value={data.formatted.with_focus.custo_liquido}
-                />
-                <Row
-                  label="Taxa da estacao"
-                  value={data.formatted.with_focus.taxa_estacao}
-                />
-              </div>
-            </div>
-            <div className="space-y-3">
-              <p className="text-sm text-zinc-400">
-                O retorno reduz o consumo real dos materiais. Ele nao entra como venda extra.
-              </p>
-              <MaterialBreakdownCard
-                title="Materiais sem foco"
-                materiais={data.formatted.without_focus.materiais}
-              />
-              <MaterialBreakdownCard
-                title="Materiais com foco"
-                materiais={data.formatted.with_focus.materiais}
-              />
-            </div>
-          </section>
-        </>
-      )}
+            </details>
+          </>
+        );
+      })()}
 
       {data && !isDataLote(data) && (
         <>
-          <section className="space-y-3">
-            <h2 className="text-lg font-medium text-white">Estoque inicial</h2>
-            <div className="grid grid-cols-2 gap-3">
-              <Metric
-                label={data.comprar.tier_bruto_label}
-                value={String(data.comprar.estoque_bruto_inicial)}
-              />
-              <Metric
-                label={data.comprar.label_ref_anterior}
-                value={String(data.comprar.estoque_ref_anterior_inicial)}
-              />
-            </div>
-            <p className="text-sm text-zinc-400">
-              <span className="text-zinc-300">Valor de mercado do estoque:</span>{" "}
-              {data.formatted.valor_total_estoque}
-            </p>
-          </section>
+          <VerdictCard
+            lucroFormatado={data.formatted.lucro}
+            margem={data.resultado.margem}
+            cenarioLabel={`Estoque ${usarFoco ? "com foco (54%)" : "sem foco"} · ${data.formatted.crafts_estimados} crafts estimados`}
+          />
 
-          <section className="space-y-3">
-            <h2 className="text-lg font-medium text-white">Estimativa</h2>
-            <div className="grid grid-cols-2 gap-3">
-              <Metric
-                label="Refinados estimados"
-                value={data.formatted.total_refinado_estimado}
-                accent
-              />
-              <Metric
-                label="Refinados inteiros (base)"
-                value={String(data.resultado.total_refinado)}
-              />
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-              <Metric
-                label="Crafts estimados"
-                value={data.formatted.crafts_estimados}
-                accent
-              />
-              <Metric
-                label="Retorno total bruto"
-                value={data.formatted.retorno_total_bruto}
-              />
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-              <Metric
-                label={`Retorno total ${data.comprar.label_ref_anterior}`}
-                value={data.formatted.retorno_total_ref_anterior}
-              />
-              <Metric
-                label="Consumo efetivo bruto"
-                value={data.formatted.consumo_efetivo_bruto}
-              />
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-              <Metric
-                label={`Consumo efetivo ${data.comprar.label_ref_anterior}`}
-                value={data.formatted.consumo_efetivo_ref_anterior}
-              />
-              <Metric
-                label="Sobra bruto (estimada)"
-                value={data.formatted.sobra_bruto_estimado}
-              />
-            </div>
-            <div className="grid grid-cols-1 gap-3">
-              <Metric
-                label={`Sobra ${data.comprar.label_ref_anterior} (estimada)`}
-                value={data.formatted.sobra_ref_anterior_estimado}
-              />
-            </div>
-            <div className="grid grid-cols-1 gap-3">
-              <Metric label="Valor da sobra" value={data.formatted.valor_sobra} />
-            </div>
-          </section>
+          <SummaryRow
+            items={[
+              { label: "Margem", value: data.formatted.margem },
+              {
+                label: "Refinados estimados",
+                value: data.formatted.total_refinado_estimado,
+              },
+              {
+                label: "Receita líquida",
+                value: data.formatted.receita_liquida,
+              },
+              {
+                label: "Custo consumido",
+                value: data.formatted.custo_consumido,
+              },
+              {
+                label: "Valor da sobra",
+                value: data.formatted.valor_sobra,
+              },
+              {
+                label: "Taxa estação",
+                value: data.formatted.taxa_estacao,
+              },
+            ]}
+          />
 
-          <section className="space-y-3">
-            <h2 className="text-lg font-medium text-white">Resultado</h2>
-            <div className="grid grid-cols-2 gap-3">
-              <Metric label="Lucro" value={data.formatted.lucro} accent />
-              <Metric label="Margem" value={data.formatted.margem} accent />
+          <details className="space-y-4 rounded-xl border border-zinc-800 bg-zinc-900/30 p-4">
+            <summary className="cursor-pointer text-sm font-medium text-zinc-200">
+              Ver detalhes
+            </summary>
+
+            <div className="space-y-4 pt-4">
+              {/* Estoque inicial fornecido pelo usuário */}
+              <section className="space-y-2">
+                <h3 className="text-sm font-medium text-zinc-300">
+                  Estoque inicial
+                </h3>
+                <div className="grid grid-cols-2 gap-3">
+                  <Metric
+                    label={data.comprar.tier_bruto_label}
+                    value={String(data.comprar.estoque_bruto_inicial)}
+                  />
+                  <Metric
+                    label={data.comprar.label_ref_anterior}
+                    value={String(data.comprar.estoque_ref_anterior_inicial)}
+                  />
+                </div>
+                <p className="text-xs text-zinc-500">
+                  Valor de mercado do estoque:{" "}
+                  <span className="text-zinc-300">
+                    {data.formatted.valor_total_estoque}
+                  </span>
+                </p>
+              </section>
+
+              {/* Estimativa completa de re-refino */}
+              <section className="space-y-3">
+                <h3 className="text-sm font-medium text-zinc-300">
+                  Estimativa de re-refino
+                </h3>
+                <div className="grid grid-cols-2 gap-3">
+                  <Metric
+                    label="Refinados estimados"
+                    value={data.formatted.total_refinado_estimado}
+                  />
+                  <Metric
+                    label="Refinados inteiros (base)"
+                    value={String(data.resultado.total_refinado)}
+                  />
+                  <Metric
+                    label="Crafts estimados"
+                    value={data.formatted.crafts_estimados}
+                  />
+                  <Metric
+                    label="Retorno total bruto"
+                    value={data.formatted.retorno_total_bruto}
+                  />
+                  <Metric
+                    label={`Retorno ${data.comprar.label_ref_anterior}`}
+                    value={data.formatted.retorno_total_ref_anterior}
+                  />
+                  <Metric
+                    label="Consumo efetivo bruto"
+                    value={data.formatted.consumo_efetivo_bruto}
+                  />
+                  <Metric
+                    label={`Consumo ${data.comprar.label_ref_anterior}`}
+                    value={data.formatted.consumo_efetivo_ref_anterior}
+                  />
+                  <Metric
+                    label="Sobra bruto (estimada)"
+                    value={data.formatted.sobra_bruto_estimado}
+                  />
+                  <Metric
+                    label={`Sobra ${data.comprar.label_ref_anterior} (estimada)`}
+                    value={data.formatted.sobra_ref_anterior_estimado}
+                  />
+                  <Metric
+                    label="Valor da sobra"
+                    value={data.formatted.valor_sobra}
+                  />
+                </div>
+              </section>
+
+              {/* Composição de receita e custos */}
+              <section className="space-y-3">
+                <h3 className="text-sm font-medium text-zinc-300">
+                  Composição do resultado
+                </h3>
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                  <div className="space-y-2 rounded-lg border border-zinc-800 bg-zinc-900/40 p-3">
+                    <Row
+                      label="Valor total do estoque"
+                      value={data.formatted.valor_total_estoque}
+                    />
+                    <Row
+                      label="Custo consumido"
+                      value={data.formatted.custo_consumido}
+                    />
+                    <Row
+                      label="Valor da sobra"
+                      value={data.formatted.valor_sobra}
+                    />
+                    <Row
+                      label="Taxa da estação"
+                      value={data.formatted.taxa_estacao}
+                    />
+                  </div>
+                  <div className="space-y-2 rounded-lg border border-zinc-800 bg-zinc-900/40 p-3">
+                    <Row
+                      label="Receita bruta"
+                      value={data.formatted.receita_bruta}
+                    />
+                    <Row
+                      label="Receita líquida"
+                      value={data.formatted.receita_liquida}
+                    />
+                    <Row
+                      label="Resultado sobre estoque total"
+                      value={data.formatted.lucro_sobre_estoque_total}
+                    />
+                    <Row
+                      label="Margem sobre estoque total"
+                      value={data.formatted.margem_sobre_estoque_total}
+                    />
+                  </div>
+                </div>
+              </section>
             </div>
-            <p className="text-sm text-zinc-400">
-              <span className="text-zinc-300">Tier:</span>{" "}
-              {data.resultado.tier}
-              <span className="mx-2 text-zinc-600">·</span>
-              <span className="text-zinc-300">Custo consumido:</span>{" "}
-              {data.formatted.custo_consumido}
-            </p>
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-              <div className="space-y-2 rounded-lg border border-zinc-800 bg-zinc-900/30 p-3">
-                <Row
-                  label="Valor total do estoque"
-                  value={data.formatted.valor_total_estoque}
-                />
-                <Row
-                  label="Custo consumido"
-                  value={data.formatted.custo_consumido}
-                />
-                <Row
-                  label="Valor da sobra"
-                  value={data.formatted.valor_sobra}
-                />
-                <Row
-                  label="Taxa da estaÃ§Ã£o"
-                  value={data.formatted.taxa_estacao}
-                />
-              </div>
-              <div className="space-y-2 rounded-lg border border-zinc-800 bg-zinc-900/30 p-3">
-                <Row
-                  label="Receita bruta"
-                  value={data.formatted.receita_bruta}
-                />
-                <Row
-                  label="Receita líquida"
-                  value={data.formatted.receita_liquida}
-                />
-                <Row
-                  label="Resultado sobre estoque total"
-                  value={data.formatted.lucro_sobre_estoque_total}
-                />
-                <Row
-                  label="Margem sobre estoque total"
-                  value={data.formatted.margem_sobre_estoque_total}
-                />
-              </div>
-            </div>
-          </section>
+          </details>
         </>
       )}
     </main>
@@ -874,6 +992,89 @@ function Row({ label, value }: { label: string; value: string }) {
       <span className="text-zinc-500">{label}</span>
       <span className="tabular-nums text-zinc-200">{value}</span>
     </div>
+  );
+}
+
+// Bloco principal do veredito: lucro grande, silver/foco (opcional) e badge SIM/TALVEZ/NÃO.
+function VerdictCard({
+  lucroFormatado,
+  margem,
+  silverPorFocoFormatado,
+  cenarioLabel,
+}: {
+  lucroFormatado: string;
+  margem: number;
+  silverPorFocoFormatado?: string;
+  cenarioLabel?: string;
+}) {
+  // Define o nível de recomendação a partir da margem retornada pela API.
+  const verdict = classifyVerdict(margem);
+  const meta = verdictMeta(verdict);
+
+  return (
+    <section
+      className={`space-y-4 rounded-xl border ${meta.border} ${meta.bg} p-5 shadow-xl`}
+    >
+      <div className="space-y-1">
+        <p className="text-xs uppercase tracking-wide text-zinc-400">💰 Lucro</p>
+        <p
+          className={`text-4xl font-bold tabular-nums ${meta.text}`}
+        >
+          {lucroFormatado}
+        </p>
+      </div>
+
+      {silverPorFocoFormatado && (
+        <div className="space-y-1">
+          <p className="text-xs uppercase tracking-wide text-zinc-400">
+            ⚡ Silver por foco
+          </p>
+          <p className="text-2xl font-semibold tabular-nums text-zinc-100">
+            {silverPorFocoFormatado}
+          </p>
+        </div>
+      )}
+
+      <div className="flex items-center gap-3 pt-1">
+        <span className="text-xs uppercase tracking-wide text-zinc-400">
+          📊 Vale a pena
+        </span>
+        <span
+          className={`rounded-md px-3 py-1 text-sm font-bold text-white ${meta.badgeBg}`}
+        >
+          {meta.label} {meta.emoji}
+        </span>
+      </div>
+
+      {cenarioLabel && (
+        <p className="text-xs text-zinc-400">{cenarioLabel}</p>
+      )}
+    </section>
+  );
+}
+
+// Linha compacta de métricas secundárias (margem, receita, custo, etc.).
+function SummaryRow({
+  items,
+}: {
+  items: { label: string; value: string }[];
+}) {
+  return (
+    <section className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+      {items.map((item) => (
+        <div
+          key={item.label}
+          className="rounded-lg border border-zinc-800 bg-zinc-900/40 px-3 py-2"
+        >
+          <p className="text-[10px] uppercase tracking-wide text-zinc-500">
+            {item.label}
+          </p>
+          <p className="mt-0.5 text-sm font-semibold tabular-nums text-zinc-100">
+            {item.value}
+          </p>
+        </div>
+      ))}
+    </section>
   );
 }
 
