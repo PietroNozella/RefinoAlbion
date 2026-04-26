@@ -823,39 +823,51 @@ export default function Home() {
         );
       })()}
 
-      {data && !isDataLote(data) && (
-        <>
-          <VerdictCard
-            lucroFormatado={data.formatted.lucro}
-            margem={data.resultado.margem}
-            cenarioLabel={`Estoque ${usarFoco ? "com foco (54%)" : "sem foco"} · ${data.formatted.crafts_estimados} crafts estimados`}
-          />
+      {data && !isDataLote(data) && (() => {
+        const verdict = classifyVerdict(data.resultado.margem);
+        const meta = verdictMeta(verdict);
 
-          <SummaryRow
-            items={[
-              { label: "Margem", value: data.formatted.margem },
-              {
-                label: "Refinados estimados",
-                value: data.formatted.total_refinado_estimado,
-              },
-              {
-                label: "Receita líquida",
-                value: data.formatted.receita_liquida,
-              },
-              {
-                label: "Custo consumido",
-                value: data.formatted.custo_consumido,
-              },
-              {
-                label: "Valor da sobra",
-                value: data.formatted.valor_sobra,
-              },
-              {
-                label: "Taxa estação",
-                value: data.formatted.taxa_estacao,
-              },
-            ]}
-          />
+        return (
+        <>
+          {/* Card principal: lucro + margem + veredito + contexto */}
+          <section className="space-y-3 rounded-xl border border-zinc-800 bg-zinc-900/50 p-4 shadow-xl">
+            <p className="text-sm font-medium text-zinc-200">♻️ Resultado do re-refino</p>
+
+            <div className="grid grid-cols-2 gap-3">
+              {/* Painel de lucro */}
+              <div className={`space-y-1 rounded-lg border p-3 ${meta.border} ${meta.bg}`}>
+                <p className="text-xs font-medium text-zinc-400">Lucro</p>
+                <p className={`text-2xl font-bold tabular-nums ${meta.text}`}>
+                  {data.formatted.lucro}
+                </p>
+                <p className="text-sm tabular-nums text-zinc-400">
+                  {data.formatted.margem}
+                </p>
+              </div>
+
+              {/* Painel de produção */}
+              <div className="space-y-1 rounded-lg border border-zinc-700 bg-zinc-900/60 p-3">
+                <p className="text-xs font-medium text-zinc-400">Produção</p>
+                <p className="text-2xl font-bold tabular-nums text-zinc-100">
+                  {data.formatted.total_refinado_estimado}
+                </p>
+                <p className="text-xs text-zinc-500">refinados estimados</p>
+              </div>
+            </div>
+
+            {/* Veredito + contexto */}
+            <div className="flex items-center justify-between gap-3 border-t border-zinc-800 pt-3">
+              <div className="flex items-center gap-2">
+                <span className="text-xs uppercase tracking-wide text-zinc-400">Vale a pena</span>
+                <span className={`rounded-md px-3 py-1 text-sm font-bold text-white ${meta.badgeBg}`}>
+                  {meta.label} {meta.emoji}
+                </span>
+              </div>
+              <span className="text-xs text-zinc-500">
+                {usarFoco ? "com foco (54%)" : "sem foco"} · {data.formatted.crafts_estimados} crafts
+              </span>
+            </div>
+          </section>
 
           <details className="space-y-4 rounded-xl border border-zinc-800 bg-zinc-900/30 p-4">
             <summary className="cursor-pointer text-sm font-medium text-zinc-200">
@@ -982,7 +994,8 @@ export default function Home() {
             </div>
           </details>
         </>
-      )}
+        );
+      })()}
     </main>
   );
 }
