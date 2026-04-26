@@ -6,6 +6,11 @@ const TIER_OPTIONS = ["T3", "T4", "T5", "T6", "T7", "T8"];
 const DEFAULT_RETORNO_SEM_FOCO = "36.71";
 const DEFAULT_RETORNO_COM_FOCO = "54";
 
+// Defaults internos do cálculo de foco (não expostos na UI).
+// Custo base e eficiência típicos de uma conta Albion com refining especializado.
+const DEFAULT_BASE_FOCUS_COST = 1500;
+const DEFAULT_FOCUS_EFFICIENCY = 100;
+
 function productionBonusFromReturnPercent(returnPercent: number): number {
   const returnRate = returnPercent / 100;
   return (1 / (1 - returnRate) - 1) * 100;
@@ -199,8 +204,6 @@ export default function Home() {
   const [precoRefAnt, setPrecoRefAnt] = useState("");
   const [precoVenda, setPrecoVenda] = useState("");
   const [taxaEstacao, setTaxaEstacao] = useState("");
-  const [custoBaseFoco, setCustoBaseFoco] = useState("");
-  const [eficienciaFoco, setEficienciaFoco] = useState("");
   const [retornoSemFoco, setRetornoSemFoco] = useState(
     DEFAULT_RETORNO_SEM_FOCO,
   );
@@ -249,8 +252,6 @@ export default function Home() {
     const pra = Number(precoRefAnt);
     const pv = Number(precoVenda);
     const te = Number(taxaEstacao.trim() === "" ? "0" : taxaEstacao);
-    const cbf = Number(custoBaseFoco.trim() === "" ? "0" : custoBaseFoco);
-    const ef = Number(eficienciaFoco.trim() === "" ? "0" : eficienciaFoco);
     const rsf = Number(
       retornoSemFoco.trim() === "" ? DEFAULT_RETORNO_SEM_FOCO : retornoSemFoco,
     );
@@ -258,16 +259,12 @@ export default function Home() {
       retornoComFoco.trim() === "" ? DEFAULT_RETORNO_COM_FOCO : retornoComFoco,
     );
     const q = Number(quantidade);
-    if ([pb, pra, pv, te, cbf, ef, rsf, rcf, q].some((n) => Number.isNaN(n))) {
+    if ([pb, pra, pv, te, rsf, rcf, q].some((n) => Number.isNaN(n))) {
       setError("Use apenas números válidos.");
       return;
     }
     if (te < 0) {
       setError("Taxa da estaÃ§Ã£o deve ser um nÃºmero â‰¥ 0.");
-      return;
-    }
-    if (cbf < 0 || ef < 0) {
-      setError("Custo base e eficiencia de foco devem ser numeros >= 0.");
       return;
     }
     if (rsf < 0 || rcf < 0 || rsf >= 100 || rcf >= 100) {
@@ -290,8 +287,8 @@ export default function Home() {
           preco_refinado_anterior: pra,
           preco_venda_refinado: pv,
           station_fee_per_item: te,
-          base_focus_cost: cbf,
-          focus_efficiency: ef,
+          base_focus_cost: DEFAULT_BASE_FOCUS_COST,
+          focus_efficiency: DEFAULT_FOCUS_EFFICIENCY,
           production_bonus_without_focus: productionBonusFromReturnPercent(rsf),
           production_bonus_with_focus: productionBonusFromReturnPercent(rcf),
           quantidade: q,
@@ -327,8 +324,6 @@ export default function Home() {
     precoRefAnt,
     precoVenda,
     taxaEstacao,
-    custoBaseFoco,
-    eficienciaFoco,
     retornoSemFoco,
     retornoComFoco,
     quantidade,
@@ -527,56 +522,63 @@ export default function Home() {
         <details
           open={mostrarAvancado}
           onToggle={(event) => setMostrarAvancado(event.currentTarget.open)}
-          className="space-y-4 rounded-lg border border-zinc-800 bg-zinc-950/40 p-3"
+          className="space-y-5 rounded-lg border border-zinc-800 bg-zinc-950/40 p-4"
         >
           <summary className="cursor-pointer text-sm font-medium text-zinc-200">
-            Avancado
+            ⚙️ Configurações avançadas
           </summary>
-          <div className="grid grid-cols-1 gap-3 pt-3 sm:grid-cols-2">
-            {modo === "lote" && (
-              <>
+
+          {/* Grupo: Retorno de materiais — só relevante no modo lote */}
+          {modo === "lote" && (
+            <div className="space-y-3">
+              <p className="text-xs font-semibold uppercase tracking-wide text-zinc-400">
+                📦 Retorno de materiais
+              </p>
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <Field
-                  label="Retorno sem foco (%)"
+                  label="Retorno de material (sem foco)"
                   value={retornoSemFoco}
                   onChange={setRetornoSemFoco}
                   inputMode="decimal"
                 />
                 <Field
-                  label="Retorno com foco (%)"
+                  label="Retorno de material (com foco)"
                   value={retornoComFoco}
                   onChange={setRetornoComFoco}
                   inputMode="decimal"
                 />
-                <Field
-                  label="Custo base de foco"
-                  value={custoBaseFoco}
-                  onChange={setCustoBaseFoco}
-                  inputMode="decimal"
-                />
-                <Field
-                  label="Eficiencia de foco"
-                  value={eficienciaFoco}
-                  onChange={setEficienciaFoco}
-                  inputMode="decimal"
-                />
-              </>
-            )}
+              </div>
+            </div>
+          )}
+
+          {/* Grupo: Custos operacionais */}
+          <div className="space-y-3">
+            <p className="text-xs font-semibold uppercase tracking-wide text-zinc-400">
+              🏭 Custos
+            </p>
             <Field
-              label="Taxa da estacao por item"
+              label="Taxa da estação"
               value={taxaEstacao}
               onChange={setTaxaEstacao}
               inputMode="decimal"
             />
           </div>
-          <label className="flex cursor-pointer items-center gap-2 pt-3 text-sm">
-            <input
-              type="checkbox"
-              checked={premium}
-              onChange={(e) => setPremium(e.target.checked)}
-              className="size-4 rounded border-zinc-600 bg-zinc-900 text-emerald-600 focus:ring-emerald-500"
-            />
-            Premium (taxa mercado 6,5%)
-          </label>
+
+          {/* Grupo: Mercado / conta */}
+          <div className="space-y-3">
+            <p className="text-xs font-semibold uppercase tracking-wide text-zinc-400">
+              💰 Mercado
+            </p>
+            <label className="flex cursor-pointer items-center gap-2 text-sm text-zinc-200">
+              <input
+                type="checkbox"
+                checked={premium}
+                onChange={(e) => setPremium(e.target.checked)}
+                className="size-4 rounded border-zinc-600 bg-zinc-900 text-emerald-600 focus:ring-emerald-500"
+              />
+              Conta Premium (taxa 6,5%)
+            </label>
+          </div>
         </details>
 
         {modo === "estoque" && (
