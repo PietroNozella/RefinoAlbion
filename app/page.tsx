@@ -40,29 +40,29 @@ function verdictMeta(v: Verdict): {
     return {
       label: "SIM",
       emoji: "🟢",
-      border: "border-emerald-700",
-      bg: "bg-emerald-950/40",
-      text: "text-emerald-400",
-      badgeBg: "bg-emerald-600",
+      border: "border-[#2ecc71]",
+      bg: "bg-[#2ecc71]/10",
+      text: "profit-positive",
+      badgeBg: "bg-[#2ecc71]",
     };
   }
   if (v === "talvez") {
     return {
       label: "TALVEZ",
       emoji: "🟡",
-      border: "border-amber-700",
-      bg: "bg-amber-950/40",
-      text: "text-amber-400",
-      badgeBg: "bg-amber-600",
+      border: "border-[#f4b400]",
+      bg: "bg-[#f4b400]/10",
+      text: "profit-warning",
+      badgeBg: "bg-[#f4b400]",
     };
   }
   return {
     label: "NÃO",
     emoji: "🔴",
-    border: "border-red-800",
-    bg: "bg-red-950/40",
-    text: "text-red-400",
-    badgeBg: "bg-red-600",
+    border: "border-[#e74c3c]",
+    bg: "bg-[#e74c3c]/10",
+    text: "profit-negative",
+    badgeBg: "bg-[#e74c3c]",
   };
 }
 
@@ -441,22 +441,22 @@ export default function Home() {
 
   return (
     <main className="mx-auto flex min-h-dvh max-w-lg flex-col gap-8 px-4 py-10">
-      <header className="space-y-1 text-center">
-        <h1 className="text-2xl font-semibold tracking-tight text-white">
+      <header className="space-y-2 text-center">
+        <h1 className="gold-text text-3xl font-bold tracking-normal">
           Calculadora de Refino — Albion Online
         </h1>
-        <p className="text-sm text-zinc-400">Lucro e margem por lote refinado.</p>
+        <p className="text-sm font-medium text-[#d8c9a8]">Lucro e margem por lote refinado.</p>
       </header>
 
-      <section className="space-y-4 rounded-xl border border-zinc-800 bg-zinc-900/50 p-4 shadow-xl">
-        <div className="flex rounded-lg border border-zinc-700 bg-zinc-950/80 p-1">
+      <section className="game-card space-y-4 rounded-lg p-4">
+        <div className="flex rounded-md border border-[#8a5a19]/70 bg-[#0b0f14] p-1">
           <button
             type="button"
             onClick={() => setModoSafe("lote")}
             className={`flex-1 rounded-md px-3 py-2 text-sm font-medium transition ${
               modo === "lote"
-                ? "bg-emerald-600 text-white"
-                : "text-zinc-400 hover:text-zinc-200"
+                ? "bg-[#ff8c00] text-[#1b1004] shadow-inner"
+                : "text-[#d8c9a8] hover:text-[#f4b400]"
             }`}
           >
             Por quantidade
@@ -466,8 +466,8 @@ export default function Home() {
             onClick={() => setModoSafe("estoque")}
             className={`flex-1 rounded-md px-3 py-2 text-sm font-medium transition ${
               modo === "estoque"
-                ? "bg-emerald-600 text-white"
-                : "text-zinc-400 hover:text-zinc-200"
+                ? "bg-[#ff8c00] text-[#1b1004] shadow-inner"
+                : "text-[#d8c9a8] hover:text-[#f4b400]"
             }`}
           >
             Por estoque (re-refino)
@@ -475,13 +475,13 @@ export default function Home() {
         </div>
 
         <label className="block space-y-1">
-          <span className="text-xs font-medium uppercase tracking-wide text-zinc-500">
+          <span className="text-xs font-bold uppercase tracking-wide text-[#b8944d]">
             Tier
           </span>
           <select
             value={tier}
             onChange={(e) => setTier(e.target.value)}
-            className="w-full rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-zinc-100 outline-none ring-emerald-500/40 focus:border-emerald-600 focus:ring-2"
+            className="game-input w-full rounded-md px-3 py-2 text-sm outline-none"
           >
             {TIER_OPTIONS.map((t) => (
               <option key={t} value={t}>
@@ -538,16 +538,16 @@ export default function Home() {
         <details
           open={mostrarAvancado}
           onToggle={(event) => setMostrarAvancado(event.currentTarget.open)}
-          className="space-y-5 rounded-lg border border-zinc-800 bg-zinc-950/40 p-4"
+          className="game-panel space-y-5 rounded-lg p-4"
         >
-          <summary className="cursor-pointer text-sm font-medium text-zinc-200">
+          <summary className="cursor-pointer text-sm font-bold text-[#f3ead7]">
             ⚙️ Configurações avançadas
           </summary>
 
           {/* Grupo: Retorno de materiais — só relevante no modo lote */}
           {modo === "lote" && (
             <div className="space-y-3">
-              <p className="text-xs font-semibold uppercase tracking-wide text-zinc-400">
+              <p className="text-xs font-bold uppercase tracking-wide text-[#b8944d]">
                 📦 Retorno de materiais
               </p>
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
@@ -569,7 +569,7 @@ export default function Home() {
 
           {/* Grupo: Custos operacionais */}
           <div className="space-y-3">
-            <p className="text-xs font-semibold uppercase tracking-wide text-zinc-400">
+            <p className="text-xs font-bold uppercase tracking-wide text-[#b8944d]">
               🏭 Custos
             </p>
             <Field
@@ -582,15 +582,15 @@ export default function Home() {
 
           {/* Grupo: Mercado / conta */}
           <div className="space-y-3">
-            <p className="text-xs font-semibold uppercase tracking-wide text-zinc-400">
+            <p className="text-xs font-bold uppercase tracking-wide text-[#b8944d]">
               💰 Mercado
             </p>
-            <label className="flex cursor-pointer items-center gap-2 text-sm text-zinc-200">
+            <label className="flex cursor-pointer items-center gap-2 text-sm text-[#f3ead7]">
               <input
                 type="checkbox"
                 checked={premium}
                 onChange={(e) => setPremium(e.target.checked)}
-                className="size-4 rounded border-zinc-600 bg-zinc-900 text-emerald-600 focus:ring-emerald-500"
+                className="size-4 rounded border-[#8a5a19] bg-[#0e1319] text-[#ff8c00] focus:ring-[#ff8c00]"
               />
               Conta Premium (taxa 6,5%)
             </label>
@@ -598,7 +598,7 @@ export default function Home() {
         </details>
 
         {modo === "estoque" && (
-          <p className="text-xs leading-relaxed text-zinc-500">
+          <p className="text-xs leading-relaxed text-[#9c8f77]">
             Estimativa acumulada: usa consumo líquido esperado com retorno
             (foco ou não) para projetar múltiplos re-refinos até o esgotamento.
             Use preço 0 para recurso coletado.
@@ -607,12 +607,12 @@ export default function Home() {
 
         <div className="flex flex-wrap gap-4">
           {modo === "estoque" && (
-            <label className="flex cursor-pointer items-center gap-2 text-sm">
+            <label className="flex cursor-pointer items-center gap-2 text-sm text-[#f3ead7]">
               <input
                 type="checkbox"
                 checked={usarFoco}
                 onChange={(e) => setUsarFoco(e.target.checked)}
-                className="size-4 rounded border-zinc-600 bg-zinc-900 text-emerald-600 focus:ring-emerald-500"
+                className="size-4 rounded border-[#8a5a19] bg-[#0e1319] text-[#ff8c00] focus:ring-[#ff8c00]"
               />
               Usar foco (retorno 54%)
             </label>
@@ -623,20 +623,20 @@ export default function Home() {
           type="button"
           onClick={onCalcular}
           disabled={loading || !canSubmit}
-          className="w-full rounded-lg bg-emerald-600 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-emerald-500 disabled:cursor-not-allowed disabled:opacity-40"
+          className="game-action w-full rounded-md px-4 py-2.5 text-sm font-bold uppercase tracking-wide transition disabled:cursor-not-allowed disabled:opacity-40"
         >
           {loading ? "Calculando…" : "Calcular"}
         </button>
 
         {!canSubmit && (
-          <p className="text-center text-sm text-zinc-500">
+          <p className="text-center text-sm text-[#9c8f77]">
             {modo === "lote"
               ? "Preencha preços e quantidade para ver o resultado."
               : "Preencha preços e estoques iniciais (pelo menos um recurso)."}
           </p>
         )}
         {error && (
-          <p className="rounded-lg border border-red-900/60 bg-red-950/40 px-3 py-2 text-sm text-red-300">
+          <p className="rounded-md border border-[#e74c3c]/70 bg-[#e74c3c]/10 px-3 py-2 text-sm text-[#e74c3c]">
             {error}
           </p>
         )}
@@ -674,14 +674,14 @@ export default function Home() {
         return (
           <>
             {/* Card principal: dois painéis lado a lado + melhor opção */}
-            <section className="space-y-3 rounded-xl border border-zinc-800 bg-zinc-900/50 p-4 shadow-xl">
-              <p className="text-sm font-medium text-zinc-200">💰 Resultado do refino</p>
+            <section className="game-card space-y-3 rounded-lg p-4">
+              <p className="text-sm font-bold uppercase tracking-wide text-[#f4b400]">💰 Resultado do refino</p>
 
               <div className="grid grid-cols-2 gap-3">
                 {/* Painel sem foco */}
-                <div className="space-y-1 rounded-lg border border-zinc-700 bg-zinc-900/60 p-3">
-                  <p className="text-xs font-medium text-zinc-400">Sem foco</p>
-                  <p className="text-lg font-bold tabular-nums text-zinc-100">
+                <div className="game-panel space-y-1 rounded-lg p-3">
+                  <p className="text-xs font-bold uppercase tracking-wide text-[#b8944d]">Sem foco</p>
+                  <p className="gold-text text-lg font-bold tabular-nums">
                     {data.formatted.without_focus.lucro}
                   </p>
                   <p className={`text-sm tabular-nums ${verdictMeta(classifyVerdict(data.resultado.without_focus.margem)).text}`}>
@@ -692,12 +692,12 @@ export default function Home() {
                 {/* Painel com foco */}
                 <div className={`space-y-1 rounded-lg border p-3 ${
                   focoCompensa
-                    ? "border-emerald-700 bg-emerald-950/30"
-                    : "border-zinc-700 bg-zinc-900/60"
+                    ? "border-[#2ecc71] bg-[#2ecc71]/10"
+                    : "game-panel"
                 }`}>
-                  <p className="text-xs font-medium text-zinc-400">Com foco</p>
+                  <p className="text-xs font-bold uppercase tracking-wide text-[#b8944d]">Com foco</p>
                   <p className={`text-lg font-bold tabular-nums ${
-                    focoCompensa ? "text-emerald-400" : "text-zinc-100"
+                    "gold-text"
                   }`}>
                     {data.formatted.with_focus.lucro}
                   </p>
@@ -708,20 +708,20 @@ export default function Home() {
               </div>
 
               {/* Melhor opção + diferença */}
-              <div className="flex items-baseline justify-between gap-2 border-t border-zinc-800 pt-3">
-                <span className="text-sm text-zinc-300">
+              <div className="flex items-baseline justify-between gap-2 border-t border-[#8a5a19]/40 pt-3">
+                <span className="text-sm text-[#d8c9a8]">
                   Melhor opção:{" "}
-                  <span className="font-semibold text-zinc-100">{melhorOpcao}</span>
+                  <span className="font-semibold text-[#f3ead7]">{melhorOpcao}</span>
                 </span>
-                <span className="text-sm tabular-nums text-zinc-400">
-                  Diferença: <span className="text-zinc-200">{diffLucro >= 0 ? "+" : ""}{diffLucroFormatado}</span>
+                <span className="text-sm tabular-nums text-[#b8944d]">
+                  Diferença: <span className={diffLucro >= 0 ? "profit-positive" : "profit-negative"}>{diffLucro >= 0 ? "+" : ""}{diffLucroFormatado}</span>
                 </span>
               </div>
             </section>
 
             {/* Comprar: quantidade de insumos visível sem abrir detalhes */}
             <section className="space-y-2">
-              <h3 className="text-xs font-semibold uppercase tracking-wide text-zinc-400">Comprar</h3>
+              <h3 className="text-xs font-bold uppercase tracking-wide text-[#b8944d]">Comprar</h3>
               <div className="grid grid-cols-2 gap-3">
                 <Metric
                   label={data.comprar.tier_bruto_label}
@@ -734,18 +734,18 @@ export default function Home() {
               </div>
             </section>
 
-            <details className="space-y-4 rounded-xl border border-zinc-800 bg-zinc-900/30 p-4">
-              <summary className="cursor-pointer text-sm font-medium text-zinc-200">
+            <details className="game-card space-y-4 rounded-lg p-4">
+              <summary className="cursor-pointer text-sm font-bold text-[#f3ead7]">
                 Ver detalhes
               </summary>
 
               <div className="space-y-4 pt-4">
                 {/* Comparativo completo com/sem foco */}
                 <section className="space-y-3">
-                  <h3 className="text-sm font-medium text-zinc-300">
+                  <h3 className="text-sm font-bold text-[#f3ead7]">
                     Comparativo com/sem foco
                   </h3>
-                  <p className="text-sm text-zinc-400">
+                  <p className="text-sm text-[#d8c9a8]">
                     {data.formatted.focus_status}
                   </p>
                   <div className="grid grid-cols-2 gap-3">
@@ -767,8 +767,8 @@ export default function Home() {
                     />
                   </div>
                   <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                    <div className="space-y-2 rounded-lg border border-zinc-800 bg-zinc-900/40 p-3">
-                      <p className="text-sm font-medium text-zinc-200">Sem foco</p>
+                    <div className="game-panel space-y-2 rounded-lg p-3">
+                      <p className="text-sm font-bold text-[#f3ead7]">Sem foco</p>
                       <Row label="Lucro" value={data.formatted.without_focus.lucro} />
                       <Row label="Margem" value={data.formatted.without_focus.margem} />
                       <Row label="Custo bruto" value={data.formatted.without_focus.custo_bruto} />
@@ -781,8 +781,8 @@ export default function Home() {
                         value={data.formatted.without_focus.taxa_estacao}
                       />
                     </div>
-                    <div className="space-y-2 rounded-lg border border-zinc-800 bg-zinc-900/40 p-3">
-                      <p className="text-sm font-medium text-zinc-200">Com foco</p>
+                    <div className="game-panel space-y-2 rounded-lg p-3">
+                      <p className="text-sm font-bold text-[#f3ead7]">Com foco</p>
                       <Row label="Lucro" value={data.formatted.with_focus.lucro} />
                       <Row label="Margem" value={data.formatted.with_focus.margem} />
                       <Row
@@ -803,10 +803,10 @@ export default function Home() {
 
                 {/* Breakdown por material — auditoria fina */}
                 <section className="space-y-3">
-                  <h3 className="text-sm font-medium text-zinc-300">
+                  <h3 className="text-sm font-bold text-[#f3ead7]">
                     Materiais
                   </h3>
-                  <p className="text-xs text-zinc-500">
+                  <p className="text-xs text-[#9c8f77]">
                     O retorno reduz o consumo real dos materiais. Ele não entra
                     como venda extra.
                   </p>
@@ -832,54 +832,54 @@ export default function Home() {
         return (
         <>
           {/* Card principal: lucro + margem + veredito + contexto */}
-          <section className="space-y-3 rounded-xl border border-zinc-800 bg-zinc-900/50 p-4 shadow-xl">
-            <p className="text-sm font-medium text-zinc-200">♻️ Resultado do re-refino</p>
+          <section className="game-card space-y-3 rounded-lg p-4">
+            <p className="text-sm font-bold uppercase tracking-wide text-[#f4b400]">♻️ Resultado do re-refino</p>
 
             <div className="grid grid-cols-2 gap-3">
               {/* Painel de lucro */}
               <div className={`space-y-1 rounded-lg border p-3 ${meta.border} ${meta.bg}`}>
-                <p className="text-xs font-medium text-zinc-400">Lucro</p>
-                <p className={`text-2xl font-bold tabular-nums ${meta.text}`}>
+                <p className="text-xs font-bold uppercase tracking-wide text-[#b8944d]">Lucro</p>
+                <p className="gold-text text-2xl font-bold tabular-nums">
                   {data.formatted.lucro}
                 </p>
-                <p className="text-sm tabular-nums text-zinc-400">
+                <p className="text-sm tabular-nums text-[#d8c9a8]">
                   {data.formatted.margem}
                 </p>
               </div>
 
               {/* Painel de produção */}
-              <div className="space-y-1 rounded-lg border border-zinc-700 bg-zinc-900/60 p-3">
-                <p className="text-xs font-medium text-zinc-400">Produção</p>
-                <p className="text-2xl font-bold tabular-nums text-zinc-100">
+              <div className="game-panel space-y-1 rounded-lg p-3">
+                <p className="text-xs font-bold uppercase tracking-wide text-[#b8944d]">Produção</p>
+                <p className="text-2xl font-bold tabular-nums text-[#f3ead7]">
                   {data.formatted.total_refinado_estimado}
                 </p>
-                <p className="text-xs text-zinc-500">refinados estimados</p>
+                <p className="text-xs text-[#9c8f77]">refinados estimados</p>
               </div>
             </div>
 
             {/* Veredito + contexto */}
-            <div className="flex items-center justify-between gap-3 border-t border-zinc-800 pt-3">
+            <div className="flex items-center justify-between gap-3 border-t border-[#8a5a19]/40 pt-3">
               <div className="flex items-center gap-2">
-                <span className="text-xs uppercase tracking-wide text-zinc-400">Vale a pena</span>
-                <span className={`rounded-md px-3 py-1 text-sm font-bold text-white ${meta.badgeBg}`}>
+                <span className="text-xs uppercase tracking-wide text-[#b8944d]">Vale a pena</span>
+                <span className={`rounded-md px-3 py-1 text-sm font-bold text-[#1b1004] ${meta.badgeBg}`}>
                   {meta.label} {meta.emoji}
                 </span>
               </div>
-              <span className="text-xs text-zinc-500">
+              <span className="text-xs text-[#9c8f77]">
                 {usarFoco ? "com foco (54%)" : "sem foco"} · {data.formatted.crafts_estimados} crafts
               </span>
             </div>
           </section>
 
-          <details className="space-y-4 rounded-xl border border-zinc-800 bg-zinc-900/30 p-4">
-            <summary className="cursor-pointer text-sm font-medium text-zinc-200">
+          <details className="game-card space-y-4 rounded-lg p-4">
+            <summary className="cursor-pointer text-sm font-bold text-[#f3ead7]">
               Ver detalhes
             </summary>
 
             <div className="space-y-4 pt-4">
               {/* Estoque inicial fornecido pelo usuário */}
               <section className="space-y-2">
-                <h3 className="text-sm font-medium text-zinc-300">
+                <h3 className="text-sm font-bold text-[#f3ead7]">
                   Estoque inicial
                 </h3>
                 <div className="grid grid-cols-2 gap-3">
@@ -892,9 +892,9 @@ export default function Home() {
                     value={String(data.comprar.estoque_ref_anterior_inicial)}
                   />
                 </div>
-                <p className="text-xs text-zinc-500">
+                <p className="text-xs text-[#9c8f77]">
                   Valor de mercado do estoque:{" "}
-                  <span className="text-zinc-300">
+                  <span className="text-[#f3ead7]">
                     {data.formatted.valor_total_estoque}
                   </span>
                 </p>
@@ -902,7 +902,7 @@ export default function Home() {
 
               {/* Estimativa completa de re-refino */}
               <section className="space-y-3">
-                <h3 className="text-sm font-medium text-zinc-300">
+                <h3 className="text-sm font-bold text-[#f3ead7]">
                   Estimativa de re-refino
                 </h3>
                 <div className="grid grid-cols-2 gap-3">
@@ -951,11 +951,11 @@ export default function Home() {
 
               {/* Composição de receita e custos */}
               <section className="space-y-3">
-                <h3 className="text-sm font-medium text-zinc-300">
+                <h3 className="text-sm font-bold text-[#f3ead7]">
                   Composição do resultado
                 </h3>
                 <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                  <div className="space-y-2 rounded-lg border border-zinc-800 bg-zinc-900/40 p-3">
+                  <div className="game-panel space-y-2 rounded-lg p-3">
                     <Row
                       label="Valor total do estoque"
                       value={data.formatted.valor_total_estoque}
@@ -973,7 +973,7 @@ export default function Home() {
                       value={data.formatted.taxa_estacao}
                     />
                   </div>
-                  <div className="space-y-2 rounded-lg border border-zinc-800 bg-zinc-900/40 p-3">
+                  <div className="game-panel space-y-2 rounded-lg p-3">
                     <Row
                       label="Receita bruta"
                       value={data.formatted.receita_bruta}
@@ -1001,7 +1001,6 @@ export default function Home() {
     </main>
   );
 }
-
 function Field({
   label,
   value,
@@ -1015,7 +1014,7 @@ function Field({
 }) {
   return (
     <label className="block space-y-1">
-      <span className="text-xs font-medium uppercase tracking-wide text-zinc-500">
+      <span className="text-xs font-bold uppercase tracking-wide text-[#b8944d]">
         {label}
       </span>
       <input
@@ -1023,7 +1022,7 @@ function Field({
         inputMode={inputMode}
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="w-full rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-zinc-100 outline-none placeholder:text-zinc-600 focus:border-emerald-600 focus:ring-2 focus:ring-emerald-500/40"
+        className="game-input w-full rounded-md px-3 py-2 text-sm outline-none placeholder:text-[#766848]"
         placeholder="—"
       />
     </label>
@@ -1043,13 +1042,13 @@ function Metric({
     <div
       className={`rounded-lg border px-3 py-3 ${
         accent
-          ? "border-emerald-800/60 bg-emerald-950/30"
-          : "border-zinc-800 bg-zinc-900/40"
+          ? "border-[#2ecc71]/70 bg-[#2ecc71]/10"
+          : "game-panel"
       }`}
     >
-      <p className="text-xs text-zinc-500">{label}</p>
+      <p className="text-xs text-[#9c8f77]">{label}</p>
       <p
-        className={`mt-1 text-lg font-semibold tabular-nums ${accent ? "text-emerald-400" : "text-zinc-100"}`}
+        className={`mt-1 text-lg font-semibold tabular-nums ${accent ? "profit-positive" : "text-[#f3ead7]"}`}
       >
         {value}
       </p>
@@ -1060,8 +1059,8 @@ function Metric({
 function Row({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex items-baseline justify-between gap-2 text-sm">
-      <span className="text-zinc-500">{label}</span>
-      <span className="tabular-nums text-zinc-200">{value}</span>
+      <span className="text-[#9c8f77]">{label}</span>
+      <span className="tabular-nums text-[#f3ead7]">{value}</span>
     </div>
   );
 }
@@ -1093,23 +1092,23 @@ function VerdictCard({
 
   return (
     <section
-      className={`space-y-4 rounded-xl border ${meta.border} ${meta.bg} p-5 shadow-xl`}
+      className={`game-card space-y-4 rounded-lg border ${meta.border} ${meta.bg} p-5`}
     >
       {/* (1) Lucro total — destaque máximo */}
       <div className="space-y-1">
-        <p className="text-xs uppercase tracking-wide text-zinc-400">💰 Lucro</p>
-        <p className={`text-4xl font-bold tabular-nums ${meta.text}`}>
+        <p className="text-xs uppercase tracking-wide text-[#b8944d]">💰 Lucro</p>
+        <p className="gold-text text-4xl font-bold tabular-nums">
           {lucroFormatado}
         </p>
       </div>
 
       {/* (2) Veredito de "vale a pena refinar" — baseado só na margem */}
       <div className="flex items-center gap-3">
-        <span className="text-xs uppercase tracking-wide text-zinc-400">
+        <span className="text-xs uppercase tracking-wide text-[#b8944d]">
           📊 Vale a pena
         </span>
         <span
-          className={`rounded-md px-3 py-1 text-sm font-bold text-white ${meta.badgeBg}`}
+          className={`rounded-md px-3 py-1 text-sm font-bold text-[#1b1004] ${meta.badgeBg}`}
         >
           {meta.label} {meta.emoji}
         </span>
@@ -1117,14 +1116,14 @@ function VerdictCard({
 
       {/* (3) Info do foco — compensa? quanto rende? quanto extra? */}
       {focoInfo && (
-        <div className="space-y-2 rounded-lg border border-zinc-800/80 bg-zinc-950/40 p-3">
+        <div className="game-panel space-y-2 rounded-lg p-3">
           <div className="flex items-center justify-between gap-3">
-            <span className="text-xs uppercase tracking-wide text-zinc-400">
+            <span className="text-xs uppercase tracking-wide text-[#b8944d]">
               ⚡ Foco compensa?
             </span>
             <span
-              className={`rounded-md px-2 py-0.5 text-xs font-bold text-white ${
-                focoInfo.compensa ? "bg-emerald-600" : "bg-zinc-600"
+              className={`rounded-md px-2 py-0.5 text-xs font-bold text-[#1b1004] ${
+                focoInfo.compensa ? "bg-[#2ecc71]" : "bg-[#e74c3c]"
               }`}
             >
               {focoInfo.compensa ? "SIM ✓" : "NÃO ✗"}
@@ -1132,18 +1131,18 @@ function VerdictCard({
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <p className="text-[10px] uppercase tracking-wide text-zinc-500">
+              <p className="text-[10px] uppercase tracking-wide text-[#9c8f77]">
                 Eficiência (silver/foco)
               </p>
-              <p className="mt-0.5 text-base font-semibold tabular-nums text-zinc-100">
+              <p className="mt-0.5 text-base font-semibold tabular-nums text-[#f3ead7]">
                 {focoInfo.silverPorFocoFormatado}
               </p>
             </div>
             <div>
-              <p className="text-[10px] uppercase tracking-wide text-zinc-500">
+              <p className="text-[10px] uppercase tracking-wide text-[#9c8f77]">
                 Ganho extra do foco
               </p>
-              <p className="mt-0.5 text-base font-semibold tabular-nums text-zinc-100">
+              <p className="mt-0.5 text-base font-semibold tabular-nums text-[#f3ead7]">
                 {focoInfo.ganhoExtraFormatado}
               </p>
             </div>
@@ -1153,7 +1152,7 @@ function VerdictCard({
 
       {/* (4) Cenário recomendado */}
       {cenarioLabel && (
-        <p className="text-xs text-zinc-400">{cenarioLabel}</p>
+        <p className="text-xs text-[#d8c9a8]">{cenarioLabel}</p>
       )}
     </section>
   );
@@ -1170,12 +1169,12 @@ function SummaryRow({
       {items.map((item) => (
         <div
           key={item.label}
-          className="rounded-lg border border-zinc-800 bg-zinc-900/40 px-3 py-2"
+          className="game-panel rounded-lg px-3 py-2"
         >
-          <p className="text-[10px] uppercase tracking-wide text-zinc-500">
+          <p className="text-[10px] uppercase tracking-wide text-[#9c8f77]">
             {item.label}
           </p>
-          <p className="mt-0.5 text-sm font-semibold tabular-nums text-zinc-100">
+          <p className="mt-0.5 text-sm font-semibold tabular-nums text-[#f3ead7]">
             {item.value}
           </p>
         </div>
@@ -1192,16 +1191,16 @@ function MaterialBreakdownCard({
   materiais: ApiMaterialFormatado[];
 }) {
   return (
-    <div className="space-y-3 rounded-lg border border-zinc-800 bg-zinc-900/30 p-3">
-      <p className="text-sm font-medium text-zinc-200">{title}</p>
+    <div className="game-panel space-y-3 rounded-lg p-3">
+      <p className="text-sm font-bold text-[#f3ead7]">{title}</p>
       <div className="space-y-3">
         {materiais.map((material) => (
-          <div key={material.tipo} className="space-y-2 border-t border-zinc-800 pt-3 first:border-t-0 first:pt-0">
+          <div key={material.tipo} className="space-y-2 border-t border-[#8a5a19]/40 pt-3 first:border-t-0 first:pt-0">
             <div className="flex items-baseline justify-between gap-2">
-              <span className="text-sm font-medium text-zinc-300">
+              <span className="text-sm font-medium text-[#f3ead7]">
                 {material.label}
               </span>
-              <span className="text-xs tabular-nums text-zinc-500">
+              <span className="text-xs tabular-nums text-[#9c8f77]">
                 preco {material.preco_unitario}
               </span>
             </div>
@@ -1215,3 +1214,4 @@ function MaterialBreakdownCard({
     </div>
   );
 }
+
