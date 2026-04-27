@@ -1,47 +1,59 @@
-# Refino Albion — calculadora
+# REFINE FORGE
 
-- **Python:** `calculator.py`, `recipes.py`, `formatting.py` — usados pelo Streamlit e como referência.
-- **Web (Vercel):** Next.js em `app/`; `**POST /api/calculate`** em `[app/api/calculate/route.ts](app/api/calculate/route.ts)`, com a mesma matemática em `[lib/refino.ts](lib/refino.ts)` (manter alinhado ao Python).
+<p align="left">
+  <img src="https://img.shields.io/badge/Next.js-111111?style=for-the-badge&logo=nextdotjs&logoColor=white" alt="Next.js" />
+  <img src="https://img.shields.io/badge/React-111111?style=for-the-badge&logo=react&logoColor=61DAFB" alt="React" />
+  <img src="https://img.shields.io/badge/TypeScript-111111?style=for-the-badge&logo=typescript&logoColor=3178C6" alt="TypeScript" />
+  <img src="https://img.shields.io/badge/Tailwind%20CSS-111111?style=for-the-badge&logo=tailwindcss&logoColor=38BDF8" alt="Tailwind CSS" />
+  <img src="https://img.shields.io/badge/Vercel-111111?style=for-the-badge&logo=vercel&logoColor=white" alt="Vercel" />
+</p>
 
-## Desenvolvimento
+Aplicação web para análise de lucratividade de refino no Albion, com foco em decisão rápida sobre lote e re-refino.
 
-```bash
-npm install
-npm run dev
-```
+O projeto foi estruturado como um produto comercial, com interface web e uma camada de cálculo centralizada para manter consistência entre os cenários exibidos ao usuário.
 
-Abre o front e a rota `/api/calculate` no mesmo servidor (Node).
+## O que o sistema faz
 
-### Streamlit (local)
+- Calcula lucro, margem e custo de refino por tier
+- Compara cenários com e sem foco
+- Estima consumo, retorno e sobra de materiais
+- Analisa re-refino a partir de estoque já disponível
+- Exibe uma visão prática para apoiar decisão operacional
 
-```bash
-pip install -r requirements-dev.txt
-streamlit run streamlit_app.py
-```
+## Modos disponíveis
 
-### CLI Python (opcional)
+- **Por quantidade**: análise de um lote definido pelo usuário
+- **Por estoque**: estimativa de re-refino a partir de recursos em inventário
 
-```bash
-python cli.py
-```
+## Entradas principais
 
-## Deploy na Vercel
+- Tier do recurso
+- Preço do recurso bruto
+- Preço do refinado anterior
+- Preço de venda do refinado
+- Quantidade ou estoque disponível
+- Taxa de estação
+- Parâmetros de retorno e uso de foco
+- Configuração de premium, quando aplicável
 
-1. Ligue o repositório na [Vercel](https://vercel.com).
-2. Framework: **Next.js** (deteção automática).
-3. Build: `npm run build`.
+## Saídas principais
 
-Não há `requirements.txt` na raiz de propósito: evita que a Vercel trate o repo como app Python. O deploy é só Next.js (`npm run build`).
+- Lucro estimado
+- Margem estimada
+- Receita bruta e líquida
+- Custo bruto e custo efetivo
+- Breakdown de materiais por etapa
+- Indicadores de viabilidade com e sem foco
+- Estimativa de re-refino por estoque
 
-Variáveis de ambiente não são obrigatórias.
+## Estrutura técnica
 
-## Estrutura
+- **Frontend**: Next.js com App Router
+- **Lógica de cálculo**: centralizada em `lib/refino.ts`
+- **API**: rotas `POST /api/calculate` e `POST /api/calculate-stock`
 
+## Observações
 
-| Caminho         | Função                                 |
-| --------------- | -------------------------------------- |
-| `app/`          | App Router (UI + `app/api/calculate`)  |
-| `lib/refino.ts` | Lógica espelhada para a API Node       |
-| `calculator.py` | Núcleo Python (Streamlit / referência) |
-
-
+- A aplicação mantém a lógica de cálculo alinhada entre interface e API.
+- O repositório concentra apenas a descrição do produto e sua implementação técnica.
+- Por se tratar de uma ferramenta comercial, este README evita instruções operacionais internas desnecessárias.
