@@ -22,7 +22,7 @@ O projeto foi estruturado como um produto comercial, com interface web e uma cam
 
 ## Modos disponíveis
 
-- **Por quantidade**: análise de um lote definido pelo usuário
+- **Por quantidade**: estimativa de compra, gasto e lucro para atingir uma meta de quantidade
 - **Por estoque**: estimativa de re-refino a partir de recursos em inventário
 
 ## Entradas principais
@@ -42,6 +42,7 @@ O projeto foi estruturado como um produto comercial, com interface web e uma cam
 - Margem estimada
 - Receita bruta e líquida
 - Custo bruto e custo efetivo
+- Compra estimada com re-refino
 - Breakdown de materiais por etapa
 - Indicadores de viabilidade com e sem foco
 - Estimativa de re-refino por estoque

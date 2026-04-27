@@ -58,6 +58,10 @@ export function formatarCompacto(n: number): string {
   const sign = neg ? "-" : "";
   const x = Math.abs(Number(n));
 
+  if (x < 1_000) {
+    return `${sign}${Math.round(x)}`;
+  }
+
   if (x >= 1_000_000_000) {
     const v = x / 1_000_000_000;
     return formatScaled(sign, v, "B");
@@ -70,7 +74,7 @@ export function formatarCompacto(n: number): string {
     const v = x / 1_000;
     return formatScaled(sign, v, "k");
   }
-  return n.toFixed(2);
+  return `${sign}${Math.round(x)}`;
 }
 
 function formatScaled(sign: string, v: number, suf: string): string {

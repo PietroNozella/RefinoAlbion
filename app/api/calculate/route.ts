@@ -109,7 +109,6 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: msg }, { status: 400 });
   }
 
-  const qtdSaida = quantidade;
   const recipe = getRecipe(tier);
   if (!recipe) {
     return NextResponse.json({ error: `Tier inválido: ${tier}` }, { status: 400 });
@@ -119,8 +118,6 @@ export async function POST(request: Request) {
   const nTier =
     tUp.startsWith("T") && tUp.length > 1 ? parseInt(tUp.slice(1), 10) : 0;
   const labelRefAnterior = `T${nTier - 1} refinado`;
-  const qtdBruto = recipe.raw_qty * qtdSaida;
-  const qtdRefAnterior = recipe.prev_qty * qtdSaida;
 
   const formatMaterial = (material: MaterialBreakdown) => ({
     tipo: material.tipo,
@@ -128,11 +125,11 @@ export async function POST(request: Request) {
       material.tipo === "raw"
         ? `${tier.toUpperCase()} bruto`
         : labelRefAnterior,
-    quantidade_necessaria: material.quantidade_necessaria.toFixed(2),
+    quantidade_necessaria: formatarCompacto(material.quantidade_necessaria),
     preco_unitario: formatarCompacto(material.preco_unitario),
     custo_bruto: formatarCompacto(material.custo_bruto),
-    quantidade_retornada: material.quantidade_retornada.toFixed(2),
-    quantidade_consumida: material.quantidade_consumida.toFixed(2),
+    quantidade_retornada: formatarCompacto(material.quantidade_retornada),
+    quantidade_consumida: formatarCompacto(material.quantidade_consumida),
     custo_efetivo: formatarCompacto(material.custo_efetivo),
   });
 
@@ -147,6 +144,26 @@ export async function POST(request: Request) {
     receita_liquida: formatarCompacto(resultado.receita_liquida),
   });
 
+  const getQuantidadeConsumida = (
+    resultado: ResultadoRefino,
+    tipo: MaterialBreakdown["tipo"],
+  ) =>
+    resultado.materiais.find((material) => material.tipo === tipo)
+      ?.quantidade_consumida ?? 0;
+
+  const arredondarCompraEstimativa = (valor: number) => Math.ceil(valor);
+
+  const formatCompraEstimativa = (resultado: ResultadoRefino) => ({
+    qtd_bruto_estimado: formatarCompacto(
+      arredondarCompraEstimativa(getQuantidadeConsumida(resultado, "raw")),
+    ),
+    qtd_ref_anterior_estimado: formatarCompacto(
+      arredondarCompraEstimativa(
+        getQuantidadeConsumida(resultado, "previous"),
+      ),
+    ),
+  });
+
   const payload = {
     resultado: {
       without_focus: comparison.withoutFocus,
@@ -157,17 +174,41 @@ export async function POST(request: Request) {
       silver_per_focus: comparison.silverPerFocus,
     },
     comprar: {
-      qtd_bruto: qtdBruto,
-      qtd_ref_anterior: qtdRefAnterior,
+      sem_foco: {
+        qtd_bruto_estimado: formatarCompacto(
+          arredondarCompraEstimativa(
+          getQuantidadeConsumida(comparison.withoutFocus, "raw"),
+          ),
+        ),
+        qtd_ref_anterior_estimado: formatarCompacto(
+          arredondarCompraEstimativa(
+            getQuantidadeConsumida(comparison.withoutFocus, "previous"),
+          ),
+        ),
+      },
+      com_foco: {
+        qtd_bruto_estimado: formatarCompacto(
+          arredondarCompraEstimativa(getQuantidadeConsumida(comparison.withFocus, "raw")),
+        ),
+        qtd_ref_anterior_estimado: formatarCompacto(
+          arredondarCompraEstimativa(
+            getQuantidadeConsumida(comparison.withFocus, "previous"),
+          ),
+        ),
+      },
       label_ref_anterior: labelRefAnterior,
       tier_bruto_label: `${tier.toUpperCase()} bruto`,
     },
     formatted: {
       without_focus: formatResult(comparison.withoutFocus),
       with_focus: formatResult(comparison.withFocus),
+      comprar: {
+        sem_foco: formatCompraEstimativa(comparison.withoutFocus),
+        com_foco: formatCompraEstimativa(comparison.withFocus),
+      },
       extra_profit_from_focus: formatarCompacto(comparison.extraProfitFromFocus),
-      focus_cost_per_item: String(comparison.focusCostPerItem),
-      total_focus_spent: String(comparison.totalFocusSpent),
+      focus_cost_per_item: formatarCompacto(comparison.focusCostPerItem),
+      total_focus_spent: formatarCompacto(comparison.totalFocusSpent),
       silver_per_focus: formatarCompacto(comparison.silverPerFocus),
       focus_status:
         comparison.silverPerFocus > 0

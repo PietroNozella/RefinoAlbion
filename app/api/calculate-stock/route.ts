@@ -136,17 +136,17 @@ export async function POST(request: Request) {
       taxa_estacao: formatarCompacto(resultado.taxa_estacao),
       receita_bruta: formatarCompacto(resultado.receita_bruta),
       receita_liquida: formatarCompacto(resultado.receita_liquida),
-      total_refinado_estimado: resultado.total_refinado_estimado.toFixed(2),
-      crafts_estimados: resultado.crafts_estimados.toFixed(2),
-      retorno_total_bruto: resultado.retorno_total_bruto.toFixed(2),
+      total_refinado_estimado: formatarCompacto(resultado.total_refinado_estimado),
+      crafts_estimados: formatarCompacto(resultado.crafts_estimados),
+      retorno_total_bruto: formatarCompacto(resultado.retorno_total_bruto),
       retorno_total_ref_anterior:
-        resultado.retorno_total_ref_anterior.toFixed(2),
-      consumo_efetivo_bruto: resultado.consumo_efetivo_bruto.toFixed(2),
+        formatarCompacto(resultado.retorno_total_ref_anterior),
+      consumo_efetivo_bruto: formatarCompacto(resultado.consumo_efetivo_bruto),
       consumo_efetivo_ref_anterior:
-        resultado.consumo_efetivo_ref_anterior.toFixed(2),
-      sobra_bruto_estimado: resultado.sobra_bruto_estimado.toFixed(2),
+        formatarCompacto(resultado.consumo_efetivo_ref_anterior),
+      sobra_bruto_estimado: formatarCompacto(resultado.sobra_bruto_estimado),
       sobra_ref_anterior_estimado:
-        resultado.sobra_ref_anterior_estimado.toFixed(2),
+        formatarCompacto(resultado.sobra_ref_anterior_estimado),
       valor_sobra_bruto: formatarCompacto(resultado.valor_sobra_bruto),
       valor_sobra_ref_anterior: formatarCompacto(
         resultado.valor_sobra_ref_anterior,

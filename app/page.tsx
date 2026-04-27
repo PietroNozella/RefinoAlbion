@@ -1,8 +1,9 @@
-"use client";
+﻿"use client";
 
 import type { CSSProperties } from "react";
 import Image from "next/image";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { formatarCompacto } from "@/lib/refino";
 
 const TIER_OPTIONS = ["T3", "T4", "T5", "T6", "T7", "T8"];
 const resourceThemes = {
@@ -71,7 +72,7 @@ function productionBonusFromReturnPercent(returnPercent: number): number {
 }
 
 // Classifica o veredito. Aceita margem decimal (ex: 0.23 = 23%).
-// SIM: >= 50% · TALVEZ: > 15% · NÃO: <= 15%
+// SIM: >= 50% | TALVEZ: > 15% | NÃO: <= 15%
 type Verdict = "sim" | "talvez" | "nao";
 
 function classifyVerdict(margem: number): Verdict {
@@ -93,7 +94,7 @@ function verdictMeta(v: Verdict): {
   if (v === "sim") {
     return {
       label: "SIM",
-      emoji: "🟢",
+      emoji: "",
       border: "border-[#2ecc71]",
       bg: "bg-[#2ecc71]/10",
       text: "profit-positive",
@@ -103,7 +104,7 @@ function verdictMeta(v: Verdict): {
   if (v === "talvez") {
     return {
       label: "TALVEZ",
-      emoji: "🟡",
+      emoji: "",
       border: "border-[#f4b400]",
       bg: "bg-[#f4b400]/10",
       text: "profit-warning",
@@ -112,7 +113,7 @@ function verdictMeta(v: Verdict): {
   }
   return {
     label: "NÃO",
-    emoji: "🔴",
+    emoji: "X",
     border: "border-[#e74c3c]",
     bg: "bg-[#e74c3c]/10",
     text: "profit-negative",
@@ -121,10 +122,10 @@ function verdictMeta(v: Verdict): {
 }
 
 // Piso mínimo de eficiência do foco (silver por foco) para recomendá-lo.
-// Refining em Albion costuma usar 10–20 silver/focus como referência mínima.
+// Refining em Albion costuma usar 10-20 silver/focus como referência mínima.
 const SILVER_PER_FOCUS_THRESHOLD = 10;
 
-// Decide se o foco compensa: precisa render mais lucro absoluto E ter eficiência mínima.
+// Decide se o foco compensa: precisa render mais lucro absoluto e ter eficiência mínima.
 function recommendFocus(
   lucroComFoco: number,
   lucroSemFoco: number,
@@ -157,14 +158,18 @@ type ApiResponse = {
     silver_per_focus: number;
   };
   comprar: {
-    qtd_bruto: number;
-    qtd_ref_anterior: number;
+    sem_foco: ApiCompraEstimativa;
+    com_foco: ApiCompraEstimativa;
     label_ref_anterior: string;
     tier_bruto_label: string;
   };
   formatted: {
     without_focus: ApiResultadoFormatado;
     with_focus: ApiResultadoFormatado;
+    comprar: {
+      sem_foco: ApiCompraEstimativaFormatada;
+      com_foco: ApiCompraEstimativaFormatada;
+    };
     extra_profit_from_focus: string;
     focus_cost_per_item: string;
     total_focus_spent: string;
@@ -182,6 +187,16 @@ type ApiResultadoFormatado = {
   taxa_estacao: string;
   receita_bruta: string;
   receita_liquida: string;
+};
+
+type ApiCompraEstimativa = {
+  qtd_bruto_estimado: number;
+  qtd_ref_anterior_estimado: number;
+};
+
+type ApiCompraEstimativaFormatada = {
+  qtd_bruto_estimado: string;
+  qtd_ref_anterior_estimado: string;
 };
 
 type ApiMaterial = {
@@ -359,7 +374,7 @@ export default function Home() {
       return;
     }
     if (te < 0) {
-      setError("Taxa da estaÃ§Ã£o deve ser um nÃºmero â‰¥ 0.");
+      setError("Taxa da estação deve ser um número >= 0.");
       return;
     }
     if (rsf < 0 || rcf < 0 || rsf >= 100 || rcf >= 100) {
@@ -367,7 +382,7 @@ export default function Home() {
       return;
     }
     if (q < 1 || !Number.isInteger(q)) {
-      setError("Quantidade deve ser um inteiro ≥ 1.");
+      setError("Quantidade deve ser um inteiro >= 1.");
       return;
     }
 
@@ -443,11 +458,11 @@ export default function Home() {
       return;
     }
     if (te < 0) {
-      setError("Taxa da estaÃ§Ã£o deve ser um nÃºmero â‰¥ 0.");
+      setError("Taxa da estação deve ser um número >= 0.");
       return;
     }
     if (Number.isNaN(eb) || Number.isNaN(er) || eb < 0 || er < 0) {
-      setError("Estoques devem ser inteiros ≥ 0.");
+      setError("Estoques devem ser inteiros >= 0.");
       return;
     }
     if (eb === 0 && er === 0) {
@@ -515,7 +530,10 @@ export default function Home() {
   const canSubmit = modo === "lote" ? canSubmitLote : canSubmitEstoque;
   const resourceTheme = resourceThemes[resourceKey];
   const resourceItemName = resourceItemNames[resourceKey];
+  const focoAtivo = usarFoco;
   const previousTier = `T${Number(tier.replace("T", "")) - 1}`;
+  const formatQuantidadeDisplay = (value: string | number) =>
+    typeof value === "number" ? formatarCompacto(value) : value;
   const fieldLabels = {
     rawPrice: `Preço ${resourceItemName.raw} ${tier}`,
     previousRefinedPrice: `Preço ${resourceItemName.refined} ${previousTier}`,
@@ -529,7 +547,7 @@ export default function Home() {
 
   const isDataLote = (
     d: ApiResponse | ApiResponseEstoque,
-  ): d is ApiResponse => "qtd_bruto" in d.comprar;
+  ): d is ApiResponse => "sem_foco" in d.comprar;
 
   return (
       <main
@@ -568,7 +586,7 @@ export default function Home() {
                 : "text-[#d8c9a8] hover:text-[var(--resource-accent)]"
             }`}
           >
-            Por estoque (re-refino)
+            Por estoque
           </button>
         </div>
 
@@ -614,7 +632,7 @@ export default function Home() {
                 ))}
               </select>
               <span className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-xs text-[#d8c9a8]">
-                ⌄
+                v
               </span>
             </div>
           </label>
@@ -679,24 +697,24 @@ export default function Home() {
           className="game-panel space-y-5 rounded-lg p-4"
         >
           <summary className="cursor-pointer text-sm font-bold text-[#f3ead7]">
-            ⚙️ Configurações avançadas
+            Configurações avançadas
           </summary>
 
-          {/* Grupo: Retorno de materiais — só relevante no modo lote */}
+          {/* Grupo: Retorno de materiais - só relevante no modo lote */}
           {modo === "lote" && (
             <div className="space-y-3">
               <p className="text-xs font-bold uppercase tracking-wide text-[#b8944d]">
-                📦 Retorno de materiais
+                Retorno de materiais
               </p>
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <Field
-                  label="Retorno de material (sem foco)"
+                  label="Retorno sem foco"
                   value={retornoSemFoco}
                   onChange={setRetornoSemFoco}
                   inputMode="decimal"
                 />
                 <Field
-                  label="Retorno de material (com foco)"
+                  label="Retorno com foco"
                   value={retornoComFoco}
                   onChange={setRetornoComFoco}
                   inputMode="decimal"
@@ -708,9 +726,9 @@ export default function Home() {
           {/* Grupo: Custos operacionais */}
           <div className="space-y-3">
             <p className="text-xs font-bold uppercase tracking-wide text-[#b8944d]">
-              🏭 Custos
+              Custos
             </p>
-            <Field
+              <Field
               label="Taxa da estação"
               value={taxaEstacao}
               onChange={setTaxaEstacao}
@@ -721,7 +739,7 @@ export default function Home() {
           {/* Grupo: Mercado / conta */}
           <div className="space-y-3">
             <p className="text-xs font-bold uppercase tracking-wide text-[#b8944d]">
-              💰 Mercado
+              Mercado
             </p>
             <label className="flex cursor-pointer items-center gap-2 text-sm text-[#f3ead7]">
               <input
@@ -734,6 +752,21 @@ export default function Home() {
               <span className="text-[#9c8f77]">(taxa 6,5%)</span>
             </label>
           </div>
+
+          <div className="space-y-3">
+            <p className="text-xs font-bold uppercase tracking-wide text-[#b8944d]">
+              Foco
+            </p>
+            <label className="flex cursor-pointer items-center gap-2 text-sm text-[#f3ead7]">
+              <input
+                type="checkbox"
+                checked={usarFoco}
+                onChange={(e) => setUsarFoco(e.target.checked)}
+                className="accent-border size-4 rounded border bg-[#0e1319] text-[var(--resource-accent)] focus:ring-[var(--resource-accent)]"
+              />
+              <span style={{ color: "var(--resource-accent)" }}>Usar foco</span>
+            </label>
+          </div>
         </details>
 
         {modo === "estoque" && (
@@ -744,20 +777,13 @@ export default function Home() {
           </p>
         )}
 
-        <div className="flex flex-wrap gap-4">
-          {modo === "estoque" && (
-            <label className="flex cursor-pointer items-center gap-2 text-sm text-[#f3ead7]">
-              <input
-                type="checkbox"
-                checked={usarFoco}
-                onChange={(e) => setUsarFoco(e.target.checked)}
-                className="accent-border size-4 rounded border bg-[#0e1319] text-[var(--resource-accent)] focus:ring-[var(--resource-accent)]"
-              />
-              <span style={{ color: "var(--resource-accent)" }}>Usar foco</span>
-              <span className="text-[#9c8f77]">(retorno 54%)</span>
-            </label>
-          )}
-        </div>
+        {modo === "lote" && (
+          <p className="text-xs leading-relaxed text-[#9c8f77]">
+            Estimativa com re-refino: usa o retorno esperado de cada cenário
+            para calcular quanto comprar, quanto gastar e o lucro da meta
+            final.
+          </p>
+        )}
 
         <button
           type="button"
@@ -765,7 +791,7 @@ export default function Home() {
           disabled={loading || !canSubmit}
           className="game-action w-full rounded-md px-4 py-2.5 text-sm font-bold uppercase tracking-wide transition disabled:cursor-not-allowed disabled:opacity-40"
         >
-          {loading ? "Calculando…" : "Calcular"}
+          {loading ? "Calculando..." : "Calcular"}
         </button>
 
         {!canSubmit && (
@@ -783,184 +809,186 @@ export default function Home() {
       </section>
 
       {data && isDataLote(data) && (() => {
-        // Foco só é recomendado se rende mais lucro absoluto E tem eficiência mínima
+        if (!focoAtivo) {
+          const verdict = classifyVerdict(data.resultado.without_focus.margem);
+          const meta = verdictMeta(verdict);
+
+          return (
+            <>
+              <section className="game-card space-y-3 rounded-lg p-4">
+                <p className="accent-text text-sm font-bold uppercase tracking-wide">
+                  Lucro do refino
+                </p>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div className={`space-y-1 rounded-lg border p-3 ${meta.border} ${meta.bg}`}>
+                    <p className="text-xs font-bold uppercase tracking-wide text-[#b8944d]">Lucro</p>
+                    <p className="gold-text text-2xl font-bold tabular-nums">
+                      {data.formatted.without_focus.lucro}
+                    </p>
+                    <p className="text-sm tabular-nums text-[#d8c9a8]">
+                      {data.formatted.without_focus.margem}
+                    </p>
+                  </div>
+
+                  <div className="game-panel space-y-1 rounded-lg p-3">
+                    <p className="text-xs font-bold uppercase tracking-wide text-[#b8944d]">Meta</p>
+                    <p className="text-2xl font-bold tabular-nums text-[#f3ead7]">
+                      {formatQuantidadeDisplay(data.resultado.without_focus.quantidade)}
+                    </p>
+                    <p className="text-xs text-[#9c8f77]">recursos desejados</p>
+                  </div>
+                </div>
+
+                <div className="accent-divider flex items-center justify-between gap-3 border-t pt-3">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs uppercase tracking-wide text-[#b8944d]">Vale a pena</span>
+                    <span className={`rounded-md px-3 py-1 text-sm font-bold text-[#1b1004] ${meta.badgeBg}`}>
+                      {meta.label}
+                    </span>
+                  </div>
+                  <span className="text-xs text-[#9c8f77]">
+                    Gasto estimado: {data.formatted.without_focus.custo_liquido}
+                  </span>
+                </div>
+              </section>
+
+              <section className="space-y-2">
+                <h3 className="text-xs font-bold uppercase tracking-wide text-[#b8944d]">
+                  Compra estimada
+                </h3>
+                <p className="text-xs leading-relaxed text-[#9c8f77]">
+                  Compra baseada na sobra do retorno para atingir só a quantidade desejada.
+                </p>
+                <div className="game-panel space-y-2 rounded-lg p-3">
+                  <Metric
+                    label={data.comprar.tier_bruto_label}
+                    value={formatQuantidadeDisplay(
+                      data.formatted.comprar.sem_foco.qtd_bruto_estimado,
+                    )}
+                  />
+                  <Metric
+                    label={data.comprar.label_ref_anterior}
+                    value={
+                      formatQuantidadeDisplay(
+                        data.formatted.comprar.sem_foco.qtd_ref_anterior_estimado,
+                      )
+                    }
+                  />
+                </div>
+              </section>
+
+            </>
+          );
+        }
+        // Foco só é recomendado se rende mais lucro absoluto e tem eficiência mínima
         // (silver/foco >= threshold). Evita recomendar foco com retorno desprezível.
         const focoCompensa = recommendFocus(
           data.resultado.with_focus.lucro,
           data.resultado.without_focus.lucro,
           data.resultado.silver_per_focus,
         );
-        const cenario = focoCompensa
-          ? data.resultado.with_focus
-          : data.resultado.without_focus;
-        const cenarioFmt = focoCompensa
-          ? data.formatted.with_focus
-          : data.formatted.without_focus;
-        const cenarioLabel = focoCompensa
-          ? "Cenário recomendado: com foco"
-          : `Cenário recomendado: sem foco${
-              data.resultado.with_focus.lucro > data.resultado.without_focus.lucro
-                ? ` (foco rende só ${data.formatted.silver_per_focus} silver/foco)`
-                : ""
-            }`;
-
-        // Diferença de lucro entre os dois cenários (valor absoluto formatado).
+        const focoFmt = data.formatted.with_focus;
+        const semFocoFmt = data.formatted.without_focus;
+        const focoMeta = verdictMeta(classifyVerdict(data.resultado.with_focus.margem));
+        const semFocoMeta = verdictMeta(classifyVerdict(data.resultado.without_focus.margem));
         const diffLucro = data.resultado.with_focus.lucro - data.resultado.without_focus.lucro;
         const diffLucroFormatado = data.formatted.extra_profit_from_focus;
-        const melhorOpcao = data.resultado.with_focus.lucro >= data.resultado.without_focus.lucro
-          ? "Com foco"
-          : "Sem foco";
+        const focoBadge = focoCompensa ? "BOA" : "BAIXA";
+        const focoBadgeBg = focoCompensa ? "bg-[#2ecc71]" : "bg-[#c3423f]";
 
         return (
           <>
-            {/* Card principal: dois painéis lado a lado + melhor opção */}
             <section className="game-card space-y-3 rounded-lg p-4">
-              <p className="accent-text text-sm font-bold uppercase tracking-wide">💰 Resultado do refino</p>
+              <p className="accent-text text-sm font-bold uppercase tracking-wide">Lucro com foco</p>
 
               <div className="grid grid-cols-2 gap-3">
-                {/* Painel sem foco */}
-                <div className="game-panel space-y-1 rounded-lg p-3">
-                  <p className="text-xs font-bold uppercase tracking-wide text-[#b8944d]">Sem foco</p>
-                  <p className="gold-text text-lg font-bold tabular-nums">
-                    {data.formatted.without_focus.lucro}
+                <div className={`space-y-1 rounded-lg border p-3 ${focoMeta.border} ${focoMeta.bg}`}>
+                  <p className="text-xs font-bold uppercase tracking-wide text-[#b8944d]">Lucro com foco</p>
+                  <p className="gold-text text-2xl font-bold tabular-nums">
+                    {focoFmt.lucro}
                   </p>
-                  <p className={`text-sm tabular-nums ${verdictMeta(classifyVerdict(data.resultado.without_focus.margem)).text}`}>
-                    {data.formatted.without_focus.margem}
+                  <p className="text-sm tabular-nums text-[#d8c9a8]">
+                    {focoFmt.margem}
                   </p>
                 </div>
 
-                {/* Painel com foco */}
-                <div className={`space-y-1 rounded-lg border p-3 ${
-                  focoCompensa
-                    ? "accent-border accent-soft"
-                    : "game-panel"
-                }`}>
-                  <p className="text-xs font-bold uppercase tracking-wide text-[#b8944d]">Com foco</p>
-                  <p className={`text-lg font-bold tabular-nums ${
-                    "gold-text"
-                  }`}>
-                    {data.formatted.with_focus.lucro}
+                <div className={`space-y-1 rounded-lg border p-3 ${semFocoMeta.border} ${semFocoMeta.bg}`}>
+                  <p className="text-xs font-bold uppercase tracking-wide text-[#b8944d]">Lucro sem foco</p>
+                  <p className="text-2xl font-bold tabular-nums text-[#f3ead7]">
+                    {semFocoFmt.lucro}
                   </p>
-                  <p className={`text-sm tabular-nums ${verdictMeta(classifyVerdict(data.resultado.with_focus.margem)).text}`}>
-                    {data.formatted.with_focus.margem}
+                  <p className="text-sm tabular-nums text-[#d8c9a8]">
+                    {semFocoFmt.margem}
                   </p>
                 </div>
               </div>
 
-              {/* Melhor opção + diferença */}
-              <div className="accent-divider flex items-baseline justify-between gap-2 border-t pt-3">
-                <span className="text-sm text-[#d8c9a8]">
-                  Melhor opção:{" "}
-                  <span className="font-semibold text-[#f3ead7]">{melhorOpcao}</span>
-                </span>
+              <div className="accent-divider flex items-center justify-between gap-3 border-t pt-3">
+                <div className="flex items-center gap-2">
+                  <span className="text-xs uppercase tracking-wide text-[#b8944d]">Eficiência do foco</span>
+                  <span className={`rounded-md px-3 py-1 text-sm font-bold text-[#1b1004] ${focoBadgeBg}`}>
+                    {focoBadge}
+                  </span>
+                </div>
                 <span className="text-sm tabular-nums text-[#b8944d]">
-                  Diferença: <span className={diffLucro >= 0 ? "profit-positive" : "profit-negative"}>{diffLucro >= 0 ? "+" : ""}{diffLucroFormatado}</span>
+                  Ganho com foco: <span className={diffLucro >= 0 ? "profit-positive" : "profit-negative"}>{diffLucro >= 0 ? "+" : ""}{diffLucroFormatado}</span>
                 </span>
               </div>
             </section>
 
-            {/* Comprar: quantidade de insumos visível sem abrir detalhes */}
+            {/* Compra estimada com re-refino */}
             <section className="space-y-2">
-              <h3 className="text-xs font-bold uppercase tracking-wide text-[#b8944d]">Comprar</h3>
-              <div className="grid grid-cols-2 gap-3">
-                <Metric
-                  label={data.comprar.tier_bruto_label}
-                  value={String(data.comprar.qtd_bruto)}
-                />
-                <Metric
-                  label={data.comprar.label_ref_anterior}
-                  value={String(data.comprar.qtd_ref_anterior)}
-                />
+              <h3 className="text-xs font-bold uppercase tracking-wide text-[#b8944d]">
+                Compra estimada
+              </h3>
+              <p className="text-xs leading-relaxed text-[#9c8f77]">
+                Compra baseada na sobra do retorno para atingir só a quantidade desejada.
+              </p>
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                <div className="game-panel space-y-2 rounded-lg p-3">
+                  <p className="text-xs font-bold uppercase tracking-wide text-[#b8944d]">
+                    Sem foco
+                  </p>
+                  <Metric
+                    label={data.comprar.tier_bruto_label}
+                    value={formatQuantidadeDisplay(
+                      data.formatted.comprar.sem_foco.qtd_bruto_estimado,
+                    )}
+                  />
+                  <Metric
+                    label={data.comprar.label_ref_anterior}
+                    value={
+                      formatQuantidadeDisplay(
+                        data.formatted.comprar.sem_foco
+                          .qtd_ref_anterior_estimado,
+                      )
+                    }
+                  />
+                </div>
+                <div className="game-panel space-y-2 rounded-lg p-3">
+                  <p className="text-xs font-bold uppercase tracking-wide text-[#b8944d]">
+                    Com foco
+                  </p>
+                  <Metric
+                    label={data.comprar.tier_bruto_label}
+                    value={formatQuantidadeDisplay(
+                      data.formatted.comprar.com_foco.qtd_bruto_estimado,
+                    )}
+                  />
+                  <Metric
+                    label={data.comprar.label_ref_anterior}
+                    value={
+                      formatQuantidadeDisplay(
+                        data.formatted.comprar.com_foco
+                          .qtd_ref_anterior_estimado,
+                      )
+                    }
+                  />
+                </div>
               </div>
             </section>
 
-            <details className="game-card space-y-4 rounded-lg p-4">
-              <summary className="cursor-pointer text-sm font-bold text-[#f3ead7]">
-                Ver detalhes
-              </summary>
-
-              <div className="space-y-4 pt-4">
-                {/* Comparativo completo com/sem foco */}
-                <section className="space-y-3">
-                  <h3 className="text-sm font-bold text-[#f3ead7]">
-                    Comparativo com/sem foco
-                  </h3>
-                  <p className="text-sm text-[#d8c9a8]">
-                    {data.formatted.focus_status}
-                  </p>
-                  <div className="grid grid-cols-2 gap-3">
-                    <Metric
-                      label="Lucro extra do foco"
-                      value={data.formatted.extra_profit_from_focus}
-                    />
-                    <Metric
-                      label="Foco por item"
-                      value={data.formatted.focus_cost_per_item}
-                    />
-                    <Metric
-                      label="Foco total"
-                      value={data.formatted.total_focus_spent}
-                    />
-                    <Metric
-                      label="Silver por foco"
-                      value={data.formatted.silver_per_focus}
-                    />
-                  </div>
-                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                    <div className="game-panel space-y-2 rounded-lg p-3">
-                      <p className="text-sm font-bold text-[#f3ead7]">Sem foco</p>
-                      <Row label="Lucro" value={data.formatted.without_focus.lucro} />
-                      <Row label="Margem" value={data.formatted.without_focus.margem} />
-                      <Row label="Custo bruto" value={data.formatted.without_focus.custo_bruto} />
-                      <Row
-                        label="Custo após retorno"
-                        value={data.formatted.without_focus.custo_liquido}
-                      />
-                      <Row
-                        label="Taxa da estação"
-                        value={data.formatted.without_focus.taxa_estacao}
-                      />
-                    </div>
-                    <div className="game-panel space-y-2 rounded-lg p-3">
-                      <p className="text-sm font-bold text-[#f3ead7]">Com foco</p>
-                      <Row label="Lucro" value={data.formatted.with_focus.lucro} />
-                      <Row label="Margem" value={data.formatted.with_focus.margem} />
-                      <Row
-                        label="Custo bruto"
-                        value={data.formatted.with_focus.custo_bruto}
-                      />
-                      <Row
-                        label="Custo após retorno"
-                        value={data.formatted.with_focus.custo_liquido}
-                      />
-                      <Row
-                        label="Taxa da estação"
-                        value={data.formatted.with_focus.taxa_estacao}
-                      />
-                    </div>
-                  </div>
-                </section>
-
-                {/* Breakdown por material — auditoria fina */}
-                <section className="space-y-3">
-                  <h3 className="text-sm font-bold text-[#f3ead7]">
-                    Materiais
-                  </h3>
-                  <p className="text-xs text-[#9c8f77]">
-                    O retorno reduz o consumo real dos materiais. Ele não entra
-                    como venda extra.
-                  </p>
-                  <MaterialBreakdownCard
-                    title="Materiais sem foco"
-                    materiais={data.formatted.without_focus.materiais}
-                  />
-                  <MaterialBreakdownCard
-                    title="Materiais com foco"
-                    materiais={data.formatted.with_focus.materiais}
-                  />
-                </section>
-              </div>
-            </details>
           </>
         );
       })()}
@@ -973,7 +1001,7 @@ export default function Home() {
         <>
           {/* Card principal: lucro + margem + veredito + contexto */}
           <section className="game-card space-y-3 rounded-lg p-4">
-            <p className="accent-text text-sm font-bold uppercase tracking-wide">♻️ Resultado do re-refino</p>
+            <p className="accent-text text-sm font-bold uppercase tracking-wide">Lucro do refino</p>
 
             <div className="grid grid-cols-2 gap-3">
               {/* Painel de lucro */}
@@ -1005,136 +1033,9 @@ export default function Home() {
                   {meta.label} {meta.emoji}
                 </span>
               </div>
-              <span className="text-xs text-[#9c8f77]">
-                {usarFoco ? "com foco (54%)" : "sem foco"} · {data.formatted.crafts_estimados} crafts
-              </span>
             </div>
           </section>
 
-          <details className="game-card space-y-4 rounded-lg p-4">
-            <summary className="cursor-pointer text-sm font-bold text-[#f3ead7]">
-              Ver detalhes
-            </summary>
-
-            <div className="space-y-4 pt-4">
-              {/* Estoque inicial fornecido pelo usuário */}
-              <section className="space-y-2">
-                <h3 className="text-sm font-bold text-[#f3ead7]">
-                  Estoque inicial
-                </h3>
-                <div className="grid grid-cols-2 gap-3">
-                  <Metric
-                    label={data.comprar.tier_bruto_label}
-                    value={String(data.comprar.estoque_bruto_inicial)}
-                  />
-                  <Metric
-                    label={data.comprar.label_ref_anterior}
-                    value={String(data.comprar.estoque_ref_anterior_inicial)}
-                  />
-                </div>
-                <p className="text-xs text-[#9c8f77]">
-                  Valor de mercado do estoque:{" "}
-                  <span className="text-[#f3ead7]">
-                    {data.formatted.valor_total_estoque}
-                  </span>
-                </p>
-              </section>
-
-              {/* Estimativa completa de re-refino */}
-              <section className="space-y-3">
-                <h3 className="text-sm font-bold text-[#f3ead7]">
-                  Estimativa de re-refino
-                </h3>
-                <div className="grid grid-cols-2 gap-3">
-                  <Metric
-                    label="Refinados estimados"
-                    value={data.formatted.total_refinado_estimado}
-                  />
-                  <Metric
-                    label="Refinados inteiros (base)"
-                    value={String(data.resultado.total_refinado)}
-                  />
-                  <Metric
-                    label="Crafts estimados"
-                    value={data.formatted.crafts_estimados}
-                  />
-                  <Metric
-                    label="Retorno total bruto"
-                    value={data.formatted.retorno_total_bruto}
-                  />
-                  <Metric
-                    label={`Retorno ${data.comprar.label_ref_anterior}`}
-                    value={data.formatted.retorno_total_ref_anterior}
-                  />
-                  <Metric
-                    label="Consumo efetivo bruto"
-                    value={data.formatted.consumo_efetivo_bruto}
-                  />
-                  <Metric
-                    label={`Consumo ${data.comprar.label_ref_anterior}`}
-                    value={data.formatted.consumo_efetivo_ref_anterior}
-                  />
-                  <Metric
-                    label="Sobra bruto (estimada)"
-                    value={data.formatted.sobra_bruto_estimado}
-                  />
-                  <Metric
-                    label={`Sobra ${data.comprar.label_ref_anterior} (estimada)`}
-                    value={data.formatted.sobra_ref_anterior_estimado}
-                  />
-                  <Metric
-                    label="Valor da sobra"
-                    value={data.formatted.valor_sobra}
-                  />
-                </div>
-              </section>
-
-              {/* Composição de receita e custos */}
-              <section className="space-y-3">
-                <h3 className="text-sm font-bold text-[#f3ead7]">
-                  Composição do resultado
-                </h3>
-                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                  <div className="game-panel space-y-2 rounded-lg p-3">
-                    <Row
-                      label="Valor total do estoque"
-                      value={data.formatted.valor_total_estoque}
-                    />
-                    <Row
-                      label="Custo consumido"
-                      value={data.formatted.custo_consumido}
-                    />
-                    <Row
-                      label="Valor da sobra"
-                      value={data.formatted.valor_sobra}
-                    />
-                    <Row
-                      label="Taxa da estação"
-                      value={data.formatted.taxa_estacao}
-                    />
-                  </div>
-                  <div className="game-panel space-y-2 rounded-lg p-3">
-                    <Row
-                      label="Receita bruta"
-                      value={data.formatted.receita_bruta}
-                    />
-                    <Row
-                      label="Receita líquida"
-                      value={data.formatted.receita_liquida}
-                    />
-                    <Row
-                      label="Resultado sobre estoque total"
-                      value={data.formatted.lucro_sobre_estoque_total}
-                    />
-                    <Row
-                      label="Margem sobre estoque total"
-                      value={data.formatted.margem_sobre_estoque_total}
-                    />
-                  </div>
-                </div>
-              </section>
-            </div>
-          </details>
         </>
         );
       })()}
@@ -1166,7 +1067,7 @@ function Field({
         value={value}
         onChange={(e) => onChange(e.target.value)}
         className="game-input w-full rounded-md px-3 py-2 text-sm outline-none placeholder:text-[#766848]"
-        placeholder="—"
+        placeholder="-"
       />
     </label>
   );
@@ -1227,10 +1128,10 @@ function ResourceSelect({
             />
           ) : null}
           <span className="truncate">
-            {selectedTheme.label} — {selectedTheme.city}
+            {selectedTheme.label} - {selectedTheme.city}
           </span>
         </span>
-        <span className="shrink-0 text-xs text-[#d8c9a8]">⌄</span>
+        <span className="shrink-0 text-xs text-[#d8c9a8]">v</span>
       </button>
 
       {open ? (
@@ -1268,7 +1169,7 @@ function ResourceSelect({
                   />
                 ) : null}
                 <span className="min-w-0 truncate">
-                  {option.label} — {option.city}
+                  {option.label} - {option.city}
                 </span>
               </button>
             );
@@ -1324,7 +1225,7 @@ function Metric({
 // Bloco principal do veredito.
 // Separa visualmente: (1) lucro do melhor cenário, (2) badge SIM/TALVEZ/NÃO da margem,
 // (3) info do foco (compensa? eficiência? ganho extra?), (4) cenário recomendado.
-// `focoInfo` é opcional — quando ausente (modo estoque), nada de foco aparece.
+// `focoInfo` é opcional - quando ausente (modo estoque), nada de foco aparece.
 function VerdictCard({
   lucroFormatado,
   margem,
@@ -1349,39 +1250,39 @@ function VerdictCard({
     <section
       className={`game-card space-y-4 rounded-lg border ${meta.border} ${meta.bg} p-5`}
     >
-      {/* (1) Lucro total — destaque máximo */}
+      {/* (1) Lucro total - destaque máximo */}
       <div className="space-y-1">
-        <p className="text-xs uppercase tracking-wide text-[#b8944d]">💰 Lucro</p>
+        <p className="text-xs uppercase tracking-wide text-[#b8944d]">Lucro</p>
         <p className="gold-text text-4xl font-bold tabular-nums">
           {lucroFormatado}
         </p>
       </div>
 
-      {/* (2) Veredito de "vale a pena refinar" — baseado só na margem */}
+      {/* (2) Veredito de "vale a pena refinar" - baseado só na margem */}
       <div className="flex items-center gap-3">
         <span className="text-xs uppercase tracking-wide text-[#b8944d]">
-          📊 Vale a pena
+          Vale a pena
         </span>
         <span
           className={`rounded-md px-3 py-1 text-sm font-bold text-[#1b1004] ${meta.badgeBg}`}
         >
-          {meta.label} {meta.emoji}
+          {meta.label}
         </span>
       </div>
 
-      {/* (3) Info do foco — compensa? quanto rende? quanto extra? */}
+      {/* (3) Info do foco - compensa? quanto rende? quanto extra? */}
       {focoInfo && (
         <div className="game-panel space-y-2 rounded-lg p-3">
           <div className="flex items-center justify-between gap-3">
             <span className="text-xs uppercase tracking-wide text-[#b8944d]">
-              ⚡ Foco compensa?
+              Foco compensa?
             </span>
             <span
               className={`rounded-md px-2 py-0.5 text-xs font-bold text-[#1b1004] ${
                 focoInfo.compensa ? "bg-[#2ecc71]" : "bg-[#e74c3c]"
               }`}
             >
-              {focoInfo.compensa ? "SIM ✓" : "NÃO ✗"}
+              {focoInfo.compensa ? "SIM" : "NÃO"}
             </span>
           </div>
           <div className="grid grid-cols-2 gap-3">
@@ -1469,4 +1370,6 @@ function MaterialBreakdownCard({
     </div>
   );
 }
+
+
 
