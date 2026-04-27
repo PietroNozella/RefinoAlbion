@@ -1,8 +1,39 @@
 "use client";
 
+import type { CSSProperties } from "react";
 import { useCallback, useState } from "react";
 
 const TIER_OPTIONS = ["T3", "T4", "T5", "T6", "T7", "T8"];
+const resourceThemes = {
+  fiber: {
+    label: "Tecido",
+    city: "Lymhurst",
+    accent: "#2ecc71",
+  },
+  ore: {
+    label: "Barras",
+    city: "Thetford",
+    accent: "#7b61ff",
+  },
+  stone: {
+    label: "Blocos",
+    city: "Bridgewatch",
+    accent: "#ff8c00",
+  },
+  hide: {
+    label: "Couro",
+    city: "Martlock",
+    accent: "#3498db",
+  },
+  wood: {
+    label: "Tábuas",
+    city: "Fort Sterling",
+    accent: "#bdc3c7",
+  },
+} as const;
+
+type ResourceKey = keyof typeof resourceThemes;
+
 const DEFAULT_RETORNO_SEM_FOCO = "36.71";
 const DEFAULT_RETORNO_COM_FOCO = "54";
 
@@ -216,6 +247,7 @@ type Modo = "lote" | "estoque";
 export default function Home() {
   const [modo, setModo] = useState<Modo>("lote");
   const [tier, setTier] = useState("T5");
+  const [resourceKey, setResourceKey] = useState<ResourceKey>("fiber");
   const [precoBruto, setPrecoBruto] = useState("");
   const [precoRefAnt, setPrecoRefAnt] = useState("");
   const [precoVenda, setPrecoVenda] = useState("");
@@ -434,13 +466,20 @@ export default function Home() {
   };
 
   const canSubmit = modo === "lote" ? canSubmitLote : canSubmitEstoque;
+  const resourceTheme = resourceThemes[resourceKey];
+  const themeStyle = {
+    "--resource-accent": resourceTheme.accent,
+  } as CSSProperties;
 
   const isDataLote = (
     d: ApiResponse | ApiResponseEstoque,
   ): d is ApiResponse => "qtd_bruto" in d.comprar;
 
   return (
-    <main className="mx-auto flex min-h-dvh max-w-lg flex-col gap-8 px-4 py-10">
+    <main
+      className="mx-auto flex min-h-dvh max-w-lg flex-col gap-8 px-4 py-10"
+      style={themeStyle}
+    >
       <header className="space-y-2 text-center">
         <h1 className="gold-text text-3xl font-bold tracking-normal">
           Calculadora de Refino — Albion Online
@@ -455,8 +494,8 @@ export default function Home() {
             onClick={() => setModoSafe("lote")}
             className={`flex-1 rounded-md px-3 py-2 text-sm font-medium transition ${
               modo === "lote"
-                ? "bg-[#ff8c00] text-[#1b1004] shadow-inner"
-                : "text-[#d8c9a8] hover:text-[#f4b400]"
+                ? "accent-tab-active shadow-inner"
+                : "text-[#d8c9a8] hover:text-[var(--resource-accent)]"
             }`}
           >
             Por quantidade
@@ -466,8 +505,8 @@ export default function Home() {
             onClick={() => setModoSafe("estoque")}
             className={`flex-1 rounded-md px-3 py-2 text-sm font-medium transition ${
               modo === "estoque"
-                ? "bg-[#ff8c00] text-[#1b1004] shadow-inner"
-                : "text-[#d8c9a8] hover:text-[#f4b400]"
+                ? "accent-tab-active shadow-inner"
+                : "text-[#d8c9a8] hover:text-[var(--resource-accent)]"
             }`}
           >
             Por estoque (re-refino)
@@ -489,6 +528,27 @@ export default function Home() {
               </option>
             ))}
           </select>
+        </label>
+
+        <label className="block space-y-1">
+          <span className="text-xs font-bold uppercase tracking-wide text-[#b8944d]">
+            Recurso
+          </span>
+          <select
+            value={resourceKey}
+            onChange={(e) => setResourceKey(e.target.value as ResourceKey)}
+            className="game-input w-full rounded-md px-3 py-2 text-sm outline-none"
+          >
+            {Object.entries(resourceThemes).map(([key, theme]) => (
+              <option key={key} value={key}>
+                {theme.label} — {theme.city}
+              </option>
+            ))}
+          </select>
+          <p className="text-xs text-[#9c8f77]">
+            Cidade ideal:{" "}
+            <span className="accent-text font-bold">{resourceTheme.city}</span>
+          </p>
         </label>
 
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
@@ -590,7 +650,7 @@ export default function Home() {
                 type="checkbox"
                 checked={premium}
                 onChange={(e) => setPremium(e.target.checked)}
-                className="size-4 rounded border-[#8a5a19] bg-[#0e1319] text-[#ff8c00] focus:ring-[#ff8c00]"
+                className="size-4 rounded border-[#8a5a19] bg-[#0e1319] text-[var(--resource-accent)] focus:ring-[var(--resource-accent)]"
               />
               Conta Premium (taxa 6,5%)
             </label>
@@ -612,7 +672,7 @@ export default function Home() {
                 type="checkbox"
                 checked={usarFoco}
                 onChange={(e) => setUsarFoco(e.target.checked)}
-                className="size-4 rounded border-[#8a5a19] bg-[#0e1319] text-[#ff8c00] focus:ring-[#ff8c00]"
+                className="size-4 rounded border-[#8a5a19] bg-[#0e1319] text-[var(--resource-accent)] focus:ring-[var(--resource-accent)]"
               />
               Usar foco (retorno 54%)
             </label>
@@ -675,7 +735,7 @@ export default function Home() {
           <>
             {/* Card principal: dois painéis lado a lado + melhor opção */}
             <section className="game-card space-y-3 rounded-lg p-4">
-              <p className="text-sm font-bold uppercase tracking-wide text-[#f4b400]">💰 Resultado do refino</p>
+              <p className="accent-text text-sm font-bold uppercase tracking-wide">💰 Resultado do refino</p>
 
               <div className="grid grid-cols-2 gap-3">
                 {/* Painel sem foco */}
@@ -692,7 +752,7 @@ export default function Home() {
                 {/* Painel com foco */}
                 <div className={`space-y-1 rounded-lg border p-3 ${
                   focoCompensa
-                    ? "border-[#2ecc71] bg-[#2ecc71]/10"
+                    ? "accent-border accent-soft"
                     : "game-panel"
                 }`}>
                   <p className="text-xs font-bold uppercase tracking-wide text-[#b8944d]">Com foco</p>
@@ -833,7 +893,7 @@ export default function Home() {
         <>
           {/* Card principal: lucro + margem + veredito + contexto */}
           <section className="game-card space-y-3 rounded-lg p-4">
-            <p className="text-sm font-bold uppercase tracking-wide text-[#f4b400]">♻️ Resultado do re-refino</p>
+            <p className="accent-text text-sm font-bold uppercase tracking-wide">♻️ Resultado do re-refino</p>
 
             <div className="grid grid-cols-2 gap-3">
               {/* Painel de lucro */}
