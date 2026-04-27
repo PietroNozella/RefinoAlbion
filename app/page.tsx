@@ -41,6 +41,17 @@ const resourceThemes = {
 type ResourceKey = keyof typeof resourceThemes;
 type ResourceTheme = (typeof resourceThemes)[ResourceKey];
 
+const resourceItemNames: Record<
+  ResourceKey,
+  { raw: string; refined: string }
+> = {
+  fiber: { raw: "algodão", refined: "tecido" },
+  ore: { raw: "minério", refined: "barra" },
+  stone: { raw: "pedra", refined: "bloco" },
+  hide: { raw: "pelego", refined: "couro" },
+  wood: { raw: "tronco", refined: "tábua" },
+};
+
 const RESOURCE_OPTIONS = Object.entries(resourceThemes).map(([key, theme]) => ({
   key: key as ResourceKey,
   ...theme,
@@ -259,6 +270,7 @@ type Modo = "lote" | "estoque";
 export default function Home() {
   const [modo, setModo] = useState<Modo>("lote");
   const [tier, setTier] = useState("T5");
+  const [tierInfoOpen, setTierInfoOpen] = useState(false);
   const [resourceKey, setResourceKey] = useState<ResourceKey>("fiber");
   const [precoBruto, setPrecoBruto] = useState("");
   const [precoRefAnt, setPrecoRefAnt] = useState("");
@@ -282,6 +294,29 @@ export default function Home() {
   );
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const tierInfoRef = useRef<HTMLLabelElement | null>(null);
+
+  useEffect(() => {
+    const handlePointerDown = (event: MouseEvent) => {
+      if (!tierInfoRef.current?.contains(event.target as Node)) {
+        setTierInfoOpen(false);
+      }
+    };
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setTierInfoOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handlePointerDown);
+    document.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      document.removeEventListener("mousedown", handlePointerDown);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, []);
 
   const setModoSafe = (m: Modo) => {
     setModo(m);
@@ -479,6 +514,15 @@ export default function Home() {
 
   const canSubmit = modo === "lote" ? canSubmitLote : canSubmitEstoque;
   const resourceTheme = resourceThemes[resourceKey];
+  const resourceItemName = resourceItemNames[resourceKey];
+  const previousTier = `T${Number(tier.replace("T", "")) - 1}`;
+  const fieldLabels = {
+    rawPrice: `Preço ${resourceItemName.raw} ${tier}`,
+    previousRefinedPrice: `Preço ${resourceItemName.refined} ${previousTier}`,
+    refinedPrice: `Preço ${resourceItemName.refined} ${tier}`,
+    rawStock: `Estoque ${resourceItemName.raw} ${tier}`,
+    previousRefinedStock: `Estoque ${resourceItemName.refined} ${previousTier}`,
+  };
   const themeStyle = {
     "--resource-accent": resourceTheme.accent,
   } as CSSProperties;
@@ -528,25 +572,52 @@ export default function Home() {
           </button>
         </div>
 
-          <label className="block space-y-1">
-            <span
-              className="text-xs font-bold uppercase tracking-wide"
-              style={{ color: "var(--resource-accent)" }}
-            >
-              Tier
-            </span>
-            <select
-              value={tier}
-              onChange={(e) => setTier(e.target.value)}
-            className="game-input w-full rounded-md px-3 py-2 text-sm outline-none"
-          >
-            {TIER_OPTIONS.map((t) => (
-              <option key={t} value={t}>
-                {t}
-              </option>
-            ))}
-          </select>
-        </label>
+          <label ref={tierInfoRef} className="block space-y-2">
+            <div className="flex items-center justify-between gap-2">
+              <span
+                className="text-xs font-bold uppercase tracking-wide"
+                style={{ color: "var(--resource-accent)" }}
+              >
+                Tier
+              </span>
+              <button
+                type="button"
+                aria-label="Ver ajuda sobre tier"
+                aria-expanded={tierInfoOpen}
+                onClick={() => setTierInfoOpen((current) => !current)}
+                className="flex size-5 items-center justify-center rounded-full border border-zinc-700 text-[11px] font-bold text-zinc-300 transition hover:border-[var(--resource-accent)] hover:bg-[color-mix(in_srgb,var(--resource-accent)_12%,transparent)] hover:text-[var(--resource-accent)]"
+              >
+                i
+              </button>
+            </div>
+            {tierInfoOpen ? (
+              <div className="space-y-1 rounded-lg border border-zinc-700 bg-zinc-950/90 px-3 py-2 text-xs leading-relaxed text-zinc-300 shadow-lg">
+                <p className="font-semibold text-zinc-100">
+                  Use apenas o tier base do recurso.
+                </p>
+                <p>
+                  Se o recurso for encantado ou não, não precisa se preocupar:
+                  a lógica de refino é a mesma. Exemplo: para T4.1, informe T4.
+                </p>
+              </div>
+            ) : null}
+            <div className="relative">
+              <select
+                value={tier}
+                onChange={(e) => setTier(e.target.value)}
+                className="game-input w-full appearance-none rounded-md px-3 py-2 pr-10 text-sm outline-none"
+              >
+                {TIER_OPTIONS.map((t) => (
+                  <option key={t} value={t}>
+                    {t}
+                  </option>
+                ))}
+              </select>
+              <span className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-xs text-[#d8c9a8]">
+                ⌄
+              </span>
+            </div>
+          </label>
 
           <div className="space-y-1">
             <span
@@ -560,19 +631,19 @@ export default function Home() {
 
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <Field
-            label="Preço recurso bruto"
+            label={fieldLabels.rawPrice}
             value={precoBruto}
             onChange={setPrecoBruto}
             inputMode="decimal"
           />
           <Field
-            label="Preço refinado anterior"
+            label={fieldLabels.previousRefinedPrice}
             value={precoRefAnt}
             onChange={setPrecoRefAnt}
             inputMode="decimal"
           />
           <Field
-            label="Valor produto refinado"
+            label={fieldLabels.refinedPrice}
             value={precoVenda}
             onChange={setPrecoVenda}
             inputMode="decimal"
@@ -587,13 +658,13 @@ export default function Home() {
           ) : (
             <>
               <Field
-                label="Estoque bruto (inicial)"
+                label={fieldLabels.rawStock}
                 value={estoqueBruto}
                 onChange={setEstoqueBruto}
                 inputMode="numeric"
               />
               <Field
-                label="Estoque refinado anterior (inicial)"
+                label={fieldLabels.previousRefinedStock}
                 value={estoqueRefAnt}
                 onChange={setEstoqueRefAnt}
                 inputMode="numeric"
