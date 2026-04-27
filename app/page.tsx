@@ -477,7 +477,7 @@ export default function Home() {
 
   return (
     <main
-      className="mx-auto flex min-h-dvh max-w-lg flex-col gap-8 px-4 py-10"
+      className="city-theme mx-auto flex min-h-dvh max-w-lg flex-col gap-8 px-4 py-10"
       style={themeStyle}
     >
       <header className="space-y-2 text-center">
@@ -488,7 +488,7 @@ export default function Home() {
       </header>
 
       <section className="game-card space-y-4 rounded-lg p-4">
-        <div className="flex rounded-md border border-[#8a5a19]/70 bg-[#0b0f14] p-1">
+        <div className="accent-border flex rounded-md border bg-[#0b0f14] p-1">
           <button
             type="button"
             onClick={() => setModoSafe("lote")}
@@ -650,7 +650,7 @@ export default function Home() {
                 type="checkbox"
                 checked={premium}
                 onChange={(e) => setPremium(e.target.checked)}
-                className="size-4 rounded border-[#8a5a19] bg-[#0e1319] text-[var(--resource-accent)] focus:ring-[var(--resource-accent)]"
+                className="accent-border size-4 rounded border bg-[#0e1319] text-[var(--resource-accent)] focus:ring-[var(--resource-accent)]"
               />
               Conta Premium (taxa 6,5%)
             </label>
@@ -672,7 +672,7 @@ export default function Home() {
                 type="checkbox"
                 checked={usarFoco}
                 onChange={(e) => setUsarFoco(e.target.checked)}
-                className="size-4 rounded border-[#8a5a19] bg-[#0e1319] text-[var(--resource-accent)] focus:ring-[var(--resource-accent)]"
+                className="accent-border size-4 rounded border bg-[#0e1319] text-[var(--resource-accent)] focus:ring-[var(--resource-accent)]"
               />
               Usar foco (retorno 54%)
             </label>
@@ -768,7 +768,7 @@ export default function Home() {
               </div>
 
               {/* Melhor opção + diferença */}
-              <div className="flex items-baseline justify-between gap-2 border-t border-[#8a5a19]/40 pt-3">
+              <div className="accent-divider flex items-baseline justify-between gap-2 border-t pt-3">
                 <span className="text-sm text-[#d8c9a8]">
                   Melhor opção:{" "}
                   <span className="font-semibold text-[#f3ead7]">{melhorOpcao}</span>
@@ -918,7 +918,7 @@ export default function Home() {
             </div>
 
             {/* Veredito + contexto */}
-            <div className="flex items-center justify-between gap-3 border-t border-[#8a5a19]/40 pt-3">
+            <div className="accent-divider flex items-center justify-between gap-3 border-t pt-3">
               <div className="flex items-center gap-2">
                 <span className="text-xs uppercase tracking-wide text-[#b8944d]">Vale a pena</span>
                 <span className={`rounded-md px-3 py-1 text-sm font-bold text-[#1b1004] ${meta.badgeBg}`}>
@@ -1255,7 +1255,7 @@ function MaterialBreakdownCard({
       <p className="text-sm font-bold text-[#f3ead7]">{title}</p>
       <div className="space-y-3">
         {materiais.map((material) => (
-          <div key={material.tipo} className="space-y-2 border-t border-[#8a5a19]/40 pt-3 first:border-t-0 first:pt-0">
+          <div key={material.tipo} className="accent-divider space-y-2 border-t pt-3 first:border-t-0 first:pt-0">
             <div className="flex items-baseline justify-between gap-2">
               <span className="text-sm font-medium text-[#f3ead7]">
                 {material.label}
