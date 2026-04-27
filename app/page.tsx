@@ -8,7 +8,7 @@ const resourceThemes = {
   fiber: {
     label: "Tecido",
     city: "Lymhurst",
-    accent: "#2ecc71",
+    accent: "#6b8f3a",
   },
   ore: {
     label: "Barras",
@@ -476,16 +476,19 @@ export default function Home() {
   ): d is ApiResponse => "qtd_bruto" in d.comprar;
 
   return (
-    <main
-      className="city-theme mx-auto flex min-h-dvh max-w-lg flex-col gap-8 px-4 py-10"
-      style={themeStyle}
-    >
-      <header className="space-y-2 text-center">
-        <h1 className="gold-text text-3xl font-bold tracking-normal">
-          Calculadora de Refino — Albion Online
-        </h1>
-        <p className="text-sm font-medium text-[#d8c9a8]">Lucro e margem por lote refinado.</p>
-      </header>
+      <main
+        className="city-theme mx-auto flex min-h-dvh max-w-lg flex-col gap-8 px-4 py-10"
+        style={themeStyle}
+      >
+        <header className="space-y-2 text-center">
+          <h1
+            className="text-3xl font-bold uppercase tracking-[0.22em]"
+            style={{ color: resourceTheme.accent }}
+          >
+            REFINE FORGE
+          </h1>
+          <p className="text-sm font-medium text-[#d8c9a8]">Maximize seu lucro no refino</p>
+        </header>
 
       <section className="game-card space-y-4 rounded-lg p-4">
         <div className="accent-border flex rounded-md border bg-[#0b0f14] p-1">
@@ -513,13 +516,16 @@ export default function Home() {
           </button>
         </div>
 
-        <label className="block space-y-1">
-          <span className="text-xs font-bold uppercase tracking-wide text-[#b8944d]">
-            Tier
-          </span>
-          <select
-            value={tier}
-            onChange={(e) => setTier(e.target.value)}
+          <label className="block space-y-1">
+            <span
+              className="text-xs font-bold uppercase tracking-wide"
+              style={{ color: "var(--resource-accent)" }}
+            >
+              Tier
+            </span>
+            <select
+              value={tier}
+              onChange={(e) => setTier(e.target.value)}
             className="game-input w-full rounded-md px-3 py-2 text-sm outline-none"
           >
             {TIER_OPTIONS.map((t) => (
@@ -530,26 +536,26 @@ export default function Home() {
           </select>
         </label>
 
-        <label className="block space-y-1">
-          <span className="text-xs font-bold uppercase tracking-wide text-[#b8944d]">
-            Recurso
-          </span>
-          <select
-            value={resourceKey}
-            onChange={(e) => setResourceKey(e.target.value as ResourceKey)}
-            className="game-input w-full rounded-md px-3 py-2 text-sm outline-none"
-          >
-            {Object.entries(resourceThemes).map(([key, theme]) => (
-              <option key={key} value={key}>
-                {theme.label} — {theme.city}
-              </option>
-            ))}
-          </select>
-          <p className="text-xs text-[#9c8f77]">
-            Cidade ideal:{" "}
-            <span className="accent-text font-bold">{resourceTheme.city}</span>
-          </p>
-        </label>
+          <label className="block space-y-1">
+            <span
+              className="text-xs font-bold uppercase tracking-wide"
+              style={{ color: "var(--resource-accent)" }}
+            >
+              Recurso
+            </span>
+            <select
+              value={resourceKey}
+              onChange={(e) => setResourceKey(e.target.value as ResourceKey)}
+              className="game-input w-full rounded-md px-3 py-2 text-sm outline-none"
+              style={{ color: resourceTheme.accent }}
+            >
+              {Object.entries(resourceThemes).map(([key, theme]) => (
+                <option key={key} value={key}>
+                  {theme.label} — {theme.city}
+                </option>
+              ))}
+            </select>
+          </label>
 
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <Field
@@ -572,7 +578,7 @@ export default function Home() {
           />
           {modo === "lote" ? (
             <Field
-              label="Quantidade (refinado desejado)"
+              label="Quantidade desejada"
               value={quantidade}
               onChange={setQuantidade}
               inputMode="numeric"
@@ -652,7 +658,8 @@ export default function Home() {
                 onChange={(e) => setPremium(e.target.checked)}
                 className="accent-border size-4 rounded border bg-[#0e1319] text-[var(--resource-accent)] focus:ring-[var(--resource-accent)]"
               />
-              Conta Premium (taxa 6,5%)
+              <span style={{ color: "var(--resource-accent)" }}>Conta Premium</span>
+              <span className="text-[#9c8f77]">(taxa 6,5%)</span>
             </label>
           </div>
         </details>
@@ -674,7 +681,8 @@ export default function Home() {
                 onChange={(e) => setUsarFoco(e.target.checked)}
                 className="accent-border size-4 rounded border bg-[#0e1319] text-[var(--resource-accent)] focus:ring-[var(--resource-accent)]"
               />
-              Usar foco (retorno 54%)
+              <span style={{ color: "var(--resource-accent)" }}>Usar foco</span>
+              <span className="text-[#9c8f77]">(retorno 54%)</span>
             </label>
           )}
         </div>
@@ -1071,13 +1079,16 @@ function Field({
   value: string;
   onChange: (v: string) => void;
   inputMode?: "decimal" | "numeric";
-}) {
-  return (
-    <label className="block space-y-1">
-      <span className="text-xs font-bold uppercase tracking-wide text-[#b8944d]">
-        {label}
-      </span>
-      <input
+  }) {
+    return (
+      <label className="block space-y-1">
+        <span
+          className="text-xs font-bold uppercase tracking-wide"
+          style={{ color: "var(--resource-accent)" }}
+        >
+          {label}
+        </span>
+        <input
         type="text"
         inputMode={inputMode}
         value={value}
@@ -1099,31 +1110,36 @@ function Metric({
   accent?: boolean;
 }) {
   return (
-    <div
-      className={`rounded-lg border px-3 py-3 ${
-        accent
-          ? "border-[#2ecc71]/70 bg-[#2ecc71]/10"
-          : "game-panel"
-      }`}
-    >
-      <p className="text-xs text-[#9c8f77]">{label}</p>
-      <p
-        className={`mt-1 text-lg font-semibold tabular-nums ${accent ? "profit-positive" : "text-[#f3ead7]"}`}
+      <div
+        className={`rounded-lg border px-3 py-3 ${
+          accent
+            ? "border-[#2ecc71]/70 bg-[#2ecc71]/10"
+            : "game-panel"
+        }`}
       >
+        <p
+          className="text-xs font-semibold uppercase tracking-wide"
+          style={{ color: "var(--resource-accent)" }}
+        >
+          {label}
+        </p>
+        <p
+          className={`mt-1 text-lg font-semibold tabular-nums ${accent ? "profit-positive" : "text-[#f3ead7]"}`}
+        >
         {value}
       </p>
     </div>
   );
 }
 
-function Row({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="flex items-baseline justify-between gap-2 text-sm">
-      <span className="text-[#9c8f77]">{label}</span>
-      <span className="tabular-nums text-[#f3ead7]">{value}</span>
-    </div>
-  );
-}
+  function Row({ label, value }: { label: string; value: string }) {
+    return (
+      <div className="flex items-baseline justify-between gap-2 text-sm">
+        <span style={{ color: "var(--resource-accent)" }}>{label}</span>
+        <span className="tabular-nums text-[#f3ead7]">{value}</span>
+      </div>
+    );
+  }
 
 // Bloco principal do veredito: lucro grande, silver/foco (opcional) e badge SIM/TALVEZ/NÃO.
 // Bloco principal do veredito.

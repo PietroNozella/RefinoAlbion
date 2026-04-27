@@ -1,129 +1,332 @@
 @import "tailwindcss";
 
 :root {
-  --albion-bg: #0b0f14;
-  --albion-card: #12181f;
-  --albion-card-strong: #171f28;
-  --albion-border: #3b2a18;
-  --albion-border-bright: #8a5a19;
-  --albion-gold: #f4b400;
+  --forge-bg: #0b0f14;
+  --forge-bg-deep: #07090d;
+  --forge-surface: #12161c;
+  --forge-surface-strong: #171d25;
+  --forge-surface-deep: #0f141a;
+  --forge-border: #3a2f1f;
+  --forge-border-soft: rgba(255, 200, 100, 0.2);
+  --forge-gold: #f0c26b;
+  --forge-gold-bright: #fff0c2;
+  --forge-ink: #f3ead7;
+  --forge-muted: #a79778;
+  --forge-shadow: rgba(0, 0, 0, 0.72);
   --albion-green: #2ecc71;
   --albion-red: #e74c3c;
   --albion-orange: #ff8c00;
-  --resource-accent: #2ecc71;
+  --resource-accent: #ff8c00;
+  --resource-text: color-mix(in srgb, var(--resource-accent) 22%, var(--forge-ink));
+  --resource-muted: color-mix(in srgb, var(--resource-accent) 10%, #8d836e);
+  --font-display: "Palatino Linotype", "Book Antiqua", "Times New Roman", serif;
+  --font-body: "Trebuchet MS", "Segoe UI", Tahoma, sans-serif;
+  --font-mono: "Consolas", "Courier New", monospace;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  background: var(--forge-bg-deep);
 }
 
 body {
+  position: relative;
+  min-height: 100dvh;
+  color: var(--forge-ink);
+  font-family: var(--font-body);
+  background-color: var(--forge-bg);
+  background-image:
+    radial-gradient(circle at 50% -10%, rgba(255, 196, 94, 0.14), transparent 28rem),
+    radial-gradient(circle at 0 0, rgba(255, 255, 255, 0.04) 1px, transparent 1px),
+    linear-gradient(180deg, #11161d 0%, #0b0f14 30%, #090c11 100%);
+  background-size: auto, 24px 24px, auto;
+}
+
+body::before,
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+}
+
+body::before {
   background:
-    radial-gradient(circle at top, rgba(244, 180, 0, 0.12), transparent 32rem),
-    linear-gradient(180deg, #111821 0%, var(--albion-bg) 22rem);
+    radial-gradient(circle at top, rgba(255, 255, 255, 0.06), transparent 30rem),
+    radial-gradient(circle at bottom, rgba(0, 0, 0, 0.4), transparent 34rem);
+  opacity: 0.9;
+}
+
+body::after {
+  background:
+    linear-gradient(90deg, rgba(255, 255, 255, 0.015) 1px, transparent 1px),
+    linear-gradient(rgba(255, 255, 255, 0.015) 1px, transparent 1px);
+  background-size: 64px 64px;
+  mix-blend-mode: soft-light;
+  opacity: 0.28;
+}
+
+.city-theme {
+  position: relative;
+  z-index: 1;
+}
+
+.city-theme,
+.city-theme :where(label, span, p, h1, h2, h3, h4, summary, button, select, input, option) {
+  color: var(--resource-text);
+}
+
+.forge-shell {
+  position: relative;
+}
+
+.forge-hero {
+  position: relative;
+  overflow: hidden;
+}
+
+.forge-hero::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle at top right, color-mix(in srgb, var(--resource-accent) 22%, transparent), transparent 18rem),
+    linear-gradient(135deg, rgba(255, 255, 255, 0.03), transparent 45%);
+  opacity: 0.9;
+  pointer-events: none;
+}
+
+.forge-hero__grid {
+  display: grid;
+  gap: 1rem;
+  align-items: center;
+}
+
+@media (min-width: 768px) {
+  .forge-hero__grid {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+}
+
+.forge-kicker {
+  color: #b8944d;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+}
+
+.forge-title,
+.section-title {
+  font-family: var(--font-display);
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.forge-subtitle,
+.status-text {
+  color: var(--forge-muted);
+}
+
+.resource-chip {
+  border: 1px solid color-mix(in srgb, var(--resource-accent) 36%, var(--forge-border));
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.05), transparent 35%),
+    linear-gradient(180deg, rgba(0, 0, 0, 0.05), rgba(0, 0, 0, 0.18)),
+    color-mix(in srgb, var(--resource-accent) 10%, var(--forge-surface));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.45),
+    0 12px 24px rgba(0, 0, 0, 0.36);
+}
+
+.section-divider {
+  height: 1px;
+  background: linear-gradient(
+    to right,
+    transparent,
+    rgba(255, 200, 100, 0.3),
+    transparent
+  );
+}
+
+.mode-switch {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.02), rgba(0, 0, 0, 0.18));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
+}
+
+.mode-option {
+  border: 1px solid transparent;
+  color: #d8c9a8;
 }
 
 .game-card {
-  border: 1px solid color-mix(in srgb, var(--resource-accent) 58%, #1b1004);
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.035), transparent),
-    var(--albion-card);
+  position: relative;
+  overflow: hidden;
+  border: 1px solid var(--forge-border);
+  background: linear-gradient(180deg, #1a1f26 0%, #12161c 100%);
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.07),
-    inset 0 -1px 0 rgba(0, 0, 0, 0.65),
-    0 18px 40px rgba(0, 0, 0, 0.42);
+    inset 0 2px 0 rgba(255, 255, 255, 0.05),
+    inset 0 -2px 0 rgba(0, 0, 0, 0.4),
+    0 10px 30px rgba(0, 0, 0, 0.6);
 }
 
-.game-panel {
-  border: 1px solid color-mix(in srgb, var(--resource-accent) 52%, transparent);
-  background: linear-gradient(180deg, var(--albion-card-strong), #10151c);
-  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--resource-accent) 8%, transparent);
+.game-card::after {
+  content: "";
+  position: absolute;
+  inset: 0.45rem;
+  border: 1px solid rgba(255, 255, 255, 0.03);
+  border-radius: inherit;
+  pointer-events: none;
+}
+
+.game-panel,
+.metric-panel {
+  border: 1px solid color-mix(in srgb, var(--resource-accent) 18%, var(--forge-border));
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.03), transparent 30%),
+    linear-gradient(180deg, var(--forge-surface-strong), var(--forge-surface-deep));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.04),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.45);
+}
+
+.metric-panel--accent {
+  border-color: color-mix(in srgb, var(--resource-accent) 42%, var(--forge-border));
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--resource-accent) 13%, rgba(255, 255, 255, 0.03)), transparent 32%),
+    linear-gradient(180deg, color-mix(in srgb, var(--resource-accent) 8%, var(--forge-surface-strong)), var(--forge-surface-deep));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.05),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.45),
+    0 0 0 1px color-mix(in srgb, var(--resource-accent) 10%, transparent);
 }
 
 .game-input {
-  border: 1px solid color-mix(in srgb, var(--resource-accent) 62%, transparent);
-  background: #0e1319;
-  color: var(--resource-accent);
+  border: 1px solid #3a2f1f;
+  background: #0f141a;
+  color: var(--forge-ink);
+  font-family: var(--font-body);
+  box-shadow:
+    inset 0 2px 4px rgba(0, 0, 0, 0.5),
+    inset 0 1px 0 rgba(255, 255, 255, 0.03);
+}
+
+.game-input:hover {
+  border-color: color-mix(in srgb, var(--resource-accent) 24%, var(--forge-border));
 }
 
 .game-input:focus {
   border-color: var(--resource-accent);
-  box-shadow: 0 0 0 2px color-mix(in srgb, var(--resource-accent) 28%, transparent);
+  box-shadow:
+    inset 0 2px 4px rgba(0, 0, 0, 0.5),
+    0 0 0 1px color-mix(in srgb, var(--resource-accent) 36%, transparent),
+    0 0 12px color-mix(in srgb, var(--resource-accent) 18%, transparent);
+}
+
+.game-input option {
+  background: #12161c;
+  color: var(--forge-ink);
 }
 
 .game-action {
-  border: 1px solid color-mix(in srgb, var(--resource-accent) 78%, white);
-  background: color-mix(in srgb, var(--resource-accent) 16%, #0e1319);
-  color: var(--resource-accent);
+  border: 1px solid color-mix(in srgb, var(--resource-accent) 48%, #5a3b12);
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--resource-accent) 42%, #ffd188) 0%,
+    color-mix(in srgb, var(--resource-accent) 78%, #723c00) 100%
+  );
+  color: #1b1004;
   box-shadow:
-    inset 0 1px 0 color-mix(in srgb, var(--resource-accent) 20%, transparent),
-    0 10px 24px color-mix(in srgb, var(--resource-accent) 18%, transparent);
+    inset 0 1px 0 rgba(255, 255, 255, 0.28),
+    inset 0 -2px 0 rgba(0, 0, 0, 0.22),
+    0 14px 24px color-mix(in srgb, var(--resource-accent) 20%, transparent);
 }
 
 .game-action:hover {
-  background: color-mix(in srgb, var(--resource-accent) 24%, #0e1319);
+  filter: saturate(1.06);
+  transform: translateY(-1px);
 }
 
 .accent-tab-active {
-  border: 1px solid color-mix(in srgb, var(--resource-accent) 78%, white);
-  background: color-mix(in srgb, var(--resource-accent) 18%, #0e1319);
-  color: var(--resource-accent);
+  border: 1px solid color-mix(in srgb, var(--resource-accent) 46%, #4a4d46);
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--resource-accent) 14%, #1b2129),
+    color-mix(in srgb, var(--resource-accent) 6%, #0e1319)
+  );
+  color: var(--forge-ink);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.06),
+    0 0 0 1px color-mix(in srgb, var(--resource-accent) 10%, transparent);
 }
 
 .accent-border {
-  border-color: var(--resource-accent);
+  border-color: color-mix(in srgb, var(--resource-accent) 34%, var(--forge-border));
 }
 
 .accent-text {
-  color: var(--resource-accent);
+  color: color-mix(in srgb, var(--resource-accent) 38%, var(--forge-gold-bright));
 }
 
 .accent-soft {
-  background: color-mix(in srgb, var(--resource-accent) 12%, transparent);
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--resource-accent) 12%, transparent),
+    transparent
+  );
 }
 
 .accent-divider {
-  border-color: color-mix(in srgb, var(--resource-accent) 42%, transparent);
-}
-
-.city-theme,
-.city-theme :where(label, span, p, h1, h2, h3, summary, button, select, input, option) {
-  color: var(--resource-accent);
+  border-color: color-mix(in srgb, var(--resource-accent) 20%, transparent);
 }
 
 .city-theme ::placeholder {
-  color: color-mix(in srgb, var(--resource-accent) 58%, transparent);
+  color: #766848;
+}
+
+.city-theme :where(summary) {
+  list-style: none;
+}
+
+.city-theme summary::-webkit-details-marker {
+  display: none;
 }
 
 .city-theme :where(.gold-text) {
   background: linear-gradient(
     180deg,
-    color-mix(in srgb, var(--resource-accent) 62%, white),
-    var(--resource-accent)
+    var(--forge-gold-bright) 0%,
+    var(--forge-gold) 46%,
+    #a86d16 100%
   );
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
 }
 
-.city-theme :where(.profit-negative) {
-  color: var(--albion-red);
-}
-
-.gold-text {
-  background: linear-gradient(
-    180deg,
-    color-mix(in srgb, var(--resource-accent) 62%, white),
-    var(--resource-accent)
-  );
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  font-weight: 700;
+.title-glow {
+  text-shadow:
+    0 0 10px color-mix(in srgb, var(--resource-accent) 28%, transparent),
+    0 0 20px rgba(255, 140, 0, 0.3),
+    0 2px 12px rgba(0, 0, 0, 0.55);
 }
 
 .profit-positive {
-  color: var(--resource-accent);
+  color: var(--albion-green);
 }
 
 .profit-warning {
-  color: var(--resource-accent);
+  color: #f4b400;
 }
 
 .profit-negative {
   color: var(--albion-red);
+}
+
+.tabular-nums {
+  font-family: var(--font-mono);
 }

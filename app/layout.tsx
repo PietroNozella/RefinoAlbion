@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Refino Albion",
+  title: "REFINE FORGE",
   description: "Lucro e margem por lote refinado",
 };
 
@@ -13,7 +13,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="pt-BR">
-      <body className="min-h-dvh bg-[#0b0f14] text-zinc-100 antialiased">
+      <body className="min-h-dvh antialiased">
         {children}
       </body>
     </html>
