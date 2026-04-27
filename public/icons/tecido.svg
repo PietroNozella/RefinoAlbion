@@ -1,0 +1,29 @@
+<svg width="128" height="128" viewBox="0 0 128 128" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="frame" x1="16" y1="16" x2="112" y2="112" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#52463A"/>
+      <stop offset="1" stop-color="#201B17"/>
+    </linearGradient>
+    <linearGradient id="cloth" x1="28" y1="34" x2="104" y2="86" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#E8D8B2"/>
+      <stop offset="1" stop-color="#C9B07C"/>
+    </linearGradient>
+    <linearGradient id="shadow" x1="22" y1="62" x2="106" y2="92" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#8A7248" stop-opacity="0.55"/>
+      <stop offset="1" stop-color="#5C4A2B" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+  <rect x="10" y="10" width="108" height="108" rx="18" fill="url(#frame)" stroke="#73624E" stroke-width="4"/>
+  <rect x="18" y="18" width="92" height="92" rx="14" fill="#8A725A" opacity="0.45"/>
+  <circle cx="28" cy="28" r="17" fill="#42362C" stroke="#A18A66" stroke-width="3"/>
+  <path d="M22 29C22 25.134 25.134 22 29 22H33V34H29C25.134 34 22 30.866 22 27V29Z" fill="#D9C9A3" opacity="0.55"/>
+  <path d="M27 22C34.18 22 40 27.82 40 35C40 39.78 37.38 43.95 33.5 46.15C32.84 46.52 31.99 46.06 31.99 45.29V24.71C31.99 23.94 31.14 23.48 30.48 23.85C29.08 24.63 27.93 25.71 27.1 27.02C26.73 27.61 26.92 28.39 27.52 28.73L41.92 36.99C42.52 37.33 43.29 37.13 43.65 36.54C45.09 34.15 46 31.38 46 28.39V28C46 21.925 40.075 16 34 16H28C24.6863 16 22 18.6863 22 22V29H27Z" fill="#B7A07A" opacity="0.35"/>
+  <path d="M26 52C34 41 54 34 73 36C86 37.37 97 45.5 102 57C104.5 62.6 103.6 68.8 99.2 73.2C89.6 82.8 70.7 89.4 50.4 88.2C37.7 87.5 26 83.3 22 75.5C18.9 69.3 21.7 60.5 26 52Z" fill="url(#cloth)"/>
+  <path d="M26 54C38 49 55 46 71 47C85 47.9 95 51.7 100 57.5C101.8 59.6 102.1 62.6 100.7 65.1C95 75 77.7 82.6 57.5 82.1C41.1 81.7 28 76.7 23.8 69.4C21.7 65.8 22.8 58.4 26 54Z" fill="#F2E5C8" opacity="0.72"/>
+  <path d="M33 42C33 42 30.7 51.9 34.7 59.4C39.3 68 52.2 72.8 68.3 72.1C81.9 71.5 92.6 67.2 98 60.4" stroke="#FFF5DF" stroke-width="4" stroke-linecap="round" opacity="0.5"/>
+  <path d="M40 49C40 49 37.6 58 41.5 64.3C46 71.6 56.8 76 70.2 75.6" stroke="#B99F72" stroke-width="3" stroke-linecap="round" opacity="0.55"/>
+  <path d="M78 39C84.5 49 86.8 61 83.4 72.2C81.8 77.5 79.1 81.6 76 84.2" stroke="#8B724F" stroke-width="4" stroke-linecap="round" opacity="0.7"/>
+  <path d="M24 90C36 94 50 96 66 95.4C81 94.8 95 91.8 104 85" stroke="url(#shadow)" stroke-width="12" stroke-linecap="round" opacity="0.7"/>
+  <path d="M18 107C29 110 41 112 55 112C76 112 92 108 106 101" stroke="#CBB58A" stroke-width="2" stroke-linecap="round" opacity="0.25"/>
+  <circle cx="103" cy="103" r="15" fill="#3A2F28" opacity="0.9" stroke="#6B5A46" stroke-width="3"/>
+</svg>

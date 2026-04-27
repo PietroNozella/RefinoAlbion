@@ -1,7 +1,8 @@
 "use client";
 
 import type { CSSProperties } from "react";
-import { useCallback, useState } from "react";
+import Image from "next/image";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 const TIER_OPTIONS = ["T3", "T4", "T5", "T6", "T7", "T8"];
 const resourceThemes = {
@@ -9,30 +10,41 @@ const resourceThemes = {
     label: "Tecido",
     city: "Lymhurst",
     accent: "#6b8f3a",
+    icon: "/icons/tecido.png",
   },
   ore: {
     label: "Barras",
     city: "Thetford",
     accent: "#7b61ff",
+    icon: "/icons/barras-transparent.png",
   },
   stone: {
     label: "Blocos",
     city: "Bridgewatch",
     accent: "#ff8c00",
+    icon: "/icons/blocos-transparent.png",
   },
   hide: {
     label: "Couro",
     city: "Martlock",
     accent: "#3498db",
+    icon: "/icons/couro-transparent.png",
   },
   wood: {
     label: "Tábuas",
     city: "Fort Sterling",
     accent: "#bdc3c7",
+    icon: "/icons/tabua-transparent.png",
   },
 } as const;
 
 type ResourceKey = keyof typeof resourceThemes;
+type ResourceTheme = (typeof resourceThemes)[ResourceKey];
+
+const RESOURCE_OPTIONS = Object.entries(resourceThemes).map(([key, theme]) => ({
+  key: key as ResourceKey,
+  ...theme,
+}));
 
 const DEFAULT_RETORNO_SEM_FOCO = "36.71";
 const DEFAULT_RETORNO_COM_FOCO = "54";
@@ -536,26 +548,15 @@ export default function Home() {
           </select>
         </label>
 
-          <label className="block space-y-1">
+          <div className="space-y-1">
             <span
               className="text-xs font-bold uppercase tracking-wide"
               style={{ color: "var(--resource-accent)" }}
             >
               Recurso
             </span>
-            <select
-              value={resourceKey}
-              onChange={(e) => setResourceKey(e.target.value as ResourceKey)}
-              className="game-input w-full rounded-md px-3 py-2 text-sm outline-none"
-              style={{ color: resourceTheme.accent }}
-            >
-              {Object.entries(resourceThemes).map(([key, theme]) => (
-                <option key={key} value={key}>
-                  {theme.label} — {theme.city}
-                </option>
-              ))}
-            </select>
-          </label>
+            <ResourceSelect value={resourceKey} onChange={setResourceKey} />
+          </div>
 
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <Field
@@ -1097,6 +1098,113 @@ function Field({
         placeholder="—"
       />
     </label>
+  );
+}
+
+function ResourceSelect({
+  value,
+  onChange,
+}: {
+  value: ResourceKey;
+  onChange: (value: ResourceKey) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const wrapperRef = useRef<HTMLDivElement | null>(null);
+  const selectedTheme = resourceThemes[value];
+
+  useEffect(() => {
+    const handlePointerDown = (event: MouseEvent) => {
+      if (!wrapperRef.current?.contains(event.target as Node)) {
+        setOpen(false);
+      }
+    };
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handlePointerDown);
+    document.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      document.removeEventListener("mousedown", handlePointerDown);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, []);
+
+  return (
+    <div ref={wrapperRef} className="relative">
+      <button
+        type="button"
+        aria-haspopup="listbox"
+        aria-expanded={open}
+        onClick={() => setOpen((current) => !current)}
+        className="game-input flex w-full items-center justify-between gap-3 rounded-md px-3 py-2 text-left text-sm outline-none"
+        style={{ color: selectedTheme.accent }}
+      >
+        <span className="flex min-w-0 items-center gap-3">
+          {selectedTheme.icon ? (
+            <Image
+              src={selectedTheme.icon}
+              alt=""
+              aria-hidden="true"
+              width={22}
+              height={22}
+              className="h-[22px] w-[22px] shrink-0 object-contain"
+            />
+          ) : null}
+          <span className="truncate">
+            {selectedTheme.label} — {selectedTheme.city}
+          </span>
+        </span>
+        <span className="shrink-0 text-xs text-[#d8c9a8]">⌄</span>
+      </button>
+
+      {open ? (
+        <div
+          role="listbox"
+          className="absolute z-20 mt-2 max-h-72 w-full overflow-auto rounded-md border border-[#3a2f1f] bg-[#12161c] p-1 shadow-[0_18px_35px_rgba(0,0,0,0.45)]"
+        >
+          {RESOURCE_OPTIONS.map((option) => {
+            const isSelected = option.key === value;
+
+            return (
+              <button
+                key={option.key}
+                type="button"
+                role="option"
+                aria-selected={isSelected}
+                onClick={() => {
+                  onChange(option.key);
+                  setOpen(false);
+                }}
+                className={`flex w-full items-center gap-3 rounded px-3 py-2 text-left text-sm transition ${
+                  isSelected
+                    ? "bg-[rgba(255,255,255,0.08)] text-[#fff7e2]"
+                    : "text-[#f3ead7] hover:bg-[rgba(255,255,255,0.05)]"
+                }`}
+              >
+                {option.icon ? (
+                  <Image
+                    src={option.icon}
+                    alt=""
+                    aria-hidden="true"
+                    width={20}
+                    height={20}
+                    className="h-5 w-5 shrink-0 object-contain"
+                  />
+                ) : null}
+                <span className="min-w-0 truncate">
+                  {option.label} — {option.city}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      ) : null}
+    </div>
   );
 }
 
