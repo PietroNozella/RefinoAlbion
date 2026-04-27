@@ -719,27 +719,27 @@ export default function Home() {
               </div>
             </section>
 
+            {/* Comprar: quantidade de insumos visível sem abrir detalhes */}
+            <section className="space-y-2">
+              <h3 className="text-xs font-semibold uppercase tracking-wide text-zinc-400">Comprar</h3>
+              <div className="grid grid-cols-2 gap-3">
+                <Metric
+                  label={data.comprar.tier_bruto_label}
+                  value={String(data.comprar.qtd_bruto)}
+                />
+                <Metric
+                  label={data.comprar.label_ref_anterior}
+                  value={String(data.comprar.qtd_ref_anterior)}
+                />
+              </div>
+            </section>
+
             <details className="space-y-4 rounded-xl border border-zinc-800 bg-zinc-900/30 p-4">
               <summary className="cursor-pointer text-sm font-medium text-zinc-200">
                 Ver detalhes
               </summary>
 
               <div className="space-y-4 pt-4">
-                {/* Comprar: quantidade de insumos a adquirir */}
-                <section className="space-y-2">
-                  <h3 className="text-sm font-medium text-zinc-300">Comprar</h3>
-                  <div className="grid grid-cols-2 gap-3">
-                    <Metric
-                      label={data.comprar.tier_bruto_label}
-                      value={String(data.comprar.qtd_bruto)}
-                    />
-                    <Metric
-                      label={data.comprar.label_ref_anterior}
-                      value={String(data.comprar.qtd_ref_anterior)}
-                    />
-                  </div>
-                </section>
-
                 {/* Comparativo completo com/sem foco */}
                 <section className="space-y-3">
                   <h3 className="text-sm font-medium text-zinc-300">
