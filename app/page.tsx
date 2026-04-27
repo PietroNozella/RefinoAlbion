@@ -694,9 +694,9 @@ export default function Home() {
         <details
           open={mostrarAvancado}
           onToggle={(event) => setMostrarAvancado(event.currentTarget.open)}
-          className="game-panel space-y-5 rounded-lg p-4"
+          className="game-panel rounded-lg px-3 py-2 open:space-y-5 open:p-4"
         >
-          <summary className="cursor-pointer text-sm font-bold text-[#f3ead7]">
+          <summary className="cursor-pointer list-none text-sm font-bold text-[#f3ead7] marker:hidden">
             Configurações avançadas
           </summary>
 
@@ -768,22 +768,6 @@ export default function Home() {
             </label>
           </div>
         </details>
-
-        {modo === "estoque" && (
-          <p className="text-xs leading-relaxed text-[#9c8f77]">
-            Estimativa acumulada: usa consumo líquido esperado com retorno
-            (foco ou não) para projetar múltiplos re-refinos até o esgotamento.
-            Use preço 0 para recurso coletado.
-          </p>
-        )}
-
-        {modo === "lote" && (
-          <p className="text-xs leading-relaxed text-[#9c8f77]">
-            Estimativa com re-refino: usa o retorno esperado de cada cenário
-            para calcular quanto comprar, quanto gastar e o lucro da meta
-            final.
-          </p>
-        )}
 
         <button
           type="button"
